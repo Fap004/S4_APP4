@@ -14,7 +14,7 @@
     Describe the purpose of this file.
  */
 /* ************************************************************************** */
-#ifndef _LABUART_H    /* Guard against multiple inclusion */
+#ifndef _LABUART_H    /* Guard against multiple inclusion */#
 #define _LABUART_H
 
 void uartInit();
