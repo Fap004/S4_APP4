@@ -27,6 +27,8 @@
 #include "test.h"
 #include "play.h"
 #include "button.h"
+#include "UART_Rx.h"
+#include "UART_Tx.h"
 
 //Machine à état fini permettant la gestion des modes
 void mef() 

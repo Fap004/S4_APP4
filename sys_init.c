@@ -37,7 +37,7 @@ void sys_init(void)
     micro_init();
     OnLed(7);
     Timer3_config();
-    UART_Init()
+    UART_Init();
     macro_enable_interrupts();
     
     //Initialisation pour l'analog discovery
