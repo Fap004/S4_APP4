@@ -38,6 +38,7 @@ void sys_init(void)
     OnLed(7);
     Timer3_config();
     UART_Init();
+    switch_init();
     macro_enable_interrupts();
     
     //Initialisation pour l'analog discovery
@@ -45,3 +46,9 @@ void sys_init(void)
     ANSELBbits.ANSB6 = 0;
     RPB6Rbits.RPB6R = 0x0C;
 }
+
+void switch_init()
+{
+    TRISFbits.TRISF3 = 1;  // RF3 (SW0) configured as input
+}
+ 

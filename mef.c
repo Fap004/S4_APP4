@@ -33,47 +33,58 @@
 //Machine à état fini permettant la gestion des modes
 void mef() 
 {
+    // ===============================
+    // PRIORITÉ INTERCOM
+    // ===============================
+    if (PORTFbits.RF3)
+    {
+        Etat = ETAT_INTERCOM;
+    }
     switch (Etat)
     {
-        // ==========================
-        case ETAT_ATT:          //Etat attente
-            T1CONbits.ON = 0;   //stop clignotement
-            OffLed(1);          //LED1 OFF
-            OffLed(0);          //sécurité
-
-            // lecture boutons SEULEMENT ici
-             if (bouton_appuye(PORTBbits.RB8, &btnR))
+        case ETAT_ATT:
+            T1CONbits.ON = 0;
+            OffLed(1);
+            OffLed(0);
+            // Lecture boutons seulement en attente
+            if (bouton_appuye(PORTBbits.RB8, &btnR))
                 Etat = ETAT_EN;
             else if (bouton_appuye(PORTBbits.RB0, &btnL))
                 Etat = ETAT_LIRE;
             else if (bouton_appuye(PORTFbits.RF0, &btnC))
                 Etat = ETAT_TEST;
+            else if (bouton_appuye(PORTBbits.RB1, &btnU))
+                Etat = ETAT_LIRE_TX;
+            else if (bouton_appuye(PORTAbits.RA15, &btnD))
+                Etat = ETAT_TEST_TX;
             break;
-
-        // ==========================
-            case ETAT_EN:               //Active l'état enregistrement
-                if (enregistrement())
-                {
-                    Etat = ETAT_ATT;    //Etat attente
-                }
-                break;
-                
-        // ==========================
+        case ETAT_EN:
+            if (enregistrement())
+                Etat = ETAT_ATT;
+            break;
         case ETAT_LIRE:
-            if (play())             //Active l'état Lire
-            {
-                Etat = ETAT_ATT;    //Etat attente
-            }
+            if (play())
+                Etat = ETAT_ATT;
             break;
-
-        // ==========================
-        case ETAT_TEST:             //Active l'état produisant un signal de 400Hz
+        case ETAT_TEST:
             if (test())
-            {
-                Etat = ETAT_ATT;    //Etat attente
-            }
+                Etat = ETAT_ATT;
             break;
-        }
+        case ETAT_LIRE_TX:
+            if (test())
+                Etat = ETAT_ATT;
+            break;
+        case ETAT_TEST_TX:
+            if (test())
+                Etat = ETAT_ATT;
+            break;
+        case ETAT_INTERCOM:
+            if (!PORTFbits.RF3)   // Sort seulement si switch OFF
+                Etat = ETAT_ATT;
+            else
+                test();  // ou fonction intercom réelle
+            break;
+    }
 }
 
 
