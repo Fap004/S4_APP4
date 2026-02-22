@@ -59,3 +59,4 @@ void UART_Init()
  
     U4MODEbits.ON = 1;          // Activer UART
 }
+//test fap
