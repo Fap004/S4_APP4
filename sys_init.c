@@ -26,6 +26,7 @@
 #include "led.h"
 #include "button.h"
 #include "speaker.h"
+#include "UART_Tx.h"
 
 //Initialisation du système
 void sys_init(void)
@@ -36,6 +37,7 @@ void sys_init(void)
     micro_init();
     OnLed(7);
     Timer3_config();
+    UART_Init()
     macro_enable_interrupts();
     
     //Initialisation pour l'analog discovery

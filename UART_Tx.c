@@ -1,82 +1,59 @@
-/* APP3
- * UART.c
- * Créateur :   paif1582 et RODL6305
- * Date :       7 février 2026
- * Revision :   1.0
- *
- * DESCRIPTION :
- *   UART4 en 9 bits, 2 stop. Envoi de tampons ADC (8 MSB ou 10 bits scindés).
- */
-
+// uart_tx.c
 #include <xc.h>
-#include <sys/attribs.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
+#include <sys/attribs.h>
 #include "config.h"
 
-#include "UART.h"
-#include "ADC.h"
-#include "test.h"
+//#include "UART.h"
+#include "UART_Tx.h"
+#include "ADC.h"   // audioBuffer[], ADC_index
 
-// === Buffers RX (optionnel, pour démo stockage réception) ===
-volatile uint16_t g_uartRxBuf[UART_RX_BUF_SIZE];
-volatile size_t   g_uartRxWr = 0;
-volatile size_t   g_uartRxRd = 0;
-
-// --- Utils internes ---
-static inline void uart_rxbuf_push(uint16_t v9)
-{
-    size_t nxt = (g_uartRxWr + 1u) % UART_RX_BUF_SIZE;
-    if (nxt != g_uartRxRd) {  // simple anti-overrun
-        g_uartRxBuf[g_uartRxWr] = v9;
-        g_uartRxWr = nxt;
-    }
-}
-
-// --- Parité impaire logicielle (sur 8 bits) ---
-static inline uint8_t odd_parity_flag8(uint8_t d) {
+/* ---------- Parité impaire logicielle (sur 8 bits) ---------- */
+static inline uint8_t odd_parity8(uint8_t d) {
     d ^= (uint8_t)(d >> 4);
     d ^= (uint8_t)(d >> 2);
     d ^= (uint8_t)(d >> 1);
-    return (uint8_t)(~d) & 1u; // 1 => mettre MSB=1 pour rendre la parité impaire
+    return (uint8_t)(~d) & 1u;  // 1 => mettre MSB=1 pour rendre la parité impaire
 }
 
-// --- Emission d'un mot "9 bits" sur U4 (PDSEL=0b11) ---
+/* ---------- Émission d?un mot 9 bits (PDSEL=0b11) ---------- */
 static inline void UART4_PutChar9(uint16_t v9) {
-    while (U4STAbits.UTXBF) { /* attendre de la place dans le FIFO TX */ }
-    U4TXREG = v9; // en mode 9 bits, le bit 8 (MSB) est transmis aussi
+    while (U4STAbits.UTXBF) { }  // attendre de la place dans le FIFO TX
+    U4TXREG = v9;                // en 9-bit mode, le bit 8 (MSB) est transmis
 }
 
+/* ---------- Initialisation UART4 ---------- */
 void UART_Init(void)
 {
     U4MODEbits.ON = 0;
 
-    // Broches Basys MX3 : U4TX -> RF12 (sortie), U4RX <- RF13 (entrée)
+    // Basys MX3 : U4TX -> RF12 (sortie), U4RX <- RF13 (entrée)
     TRISFbits.TRISF12 = 0;
     TRISFbits.TRISF13 = 1;
 
-    // PPS (codes à confirmer dans la datasheet du PIC32MX370)
-    U4RXRbits.U4RXR   = 0b0100; // RF13 -> U4RX (vérifier code exact)
-    RPF12Rbits.RPF12R = 0b0010; // U4TX -> RF12 (vérifier code exact)
-    // Câblage inter-cartes : TX<->RX croisés + GND commun (guide APP). [1](https://usherbrooke-my.sharepoint.com/personal/paif1582_usherbrooke_ca/Documents/6-Autres/Fichiers%20Microsoft%20Copilot%20Chat/s4-ge_app4_guideetudiant_2026-hiver.pdf)
-
-    // Baud ~115200 @ PBCLK~40MHz (BRGH=0 => ÷16, U4BRG=21, err ? -1.36 %)
-    U4MODEbits.BRGH = 0;
-    U4BRG = 21;
+    // PPS (codes à confirmer dans la datasheet PIC32MX370)
+    U4RXRbits.U4RXR   = 0b0100;  // RF13 -> U4RX (vérifier le code exact)
+    RPF12Rbits.RPF12R = 0b0010;  // U4TX -> RF12 (vérifier le code exact)
+    // Entre deux cartes : TX<->RX croisés + GND commun.
+    
+    // Baud ~115200 @ PBCLK~40MHz (BRGH=0 => ÷16)
+    U4MODEbits.BRGH = UART_BRGH;      // 0
+    U4BRG = UART_U4BRG_DEFAULT;       // 21 (~115200 bps)
 
     // Trame : 9 bits (sans parité matérielle), 2 stop (exigences APP)
-    U4MODEbits.PDSEL = 0b11;
-    U4MODEbits.STSEL = 1;
+    U4MODEbits.PDSEL = UART_PDSEL_9BIT_NOHWPAR; // 0b11
+    U4MODEbits.STSEL = UART_STSEL_2STOP;        // 1
 
-    // Activer TX/RX avant ON (ordre recommandé par le guide). [1](https://usherbrooke-my.sharepoint.com/personal/paif1582_usherbrooke_ca/Documents/6-Autres/Fichiers%20Microsoft%20Copilot%20Chat/s4-ge_app4_guideetudiant_2026-hiver.pdf)
+    // Activer TX/RX avant ON (ordre recommandé
     U4STAbits.UTXEN = 1;
     U4STAbits.URXEN = 1;
 
     IFS2bits.U4RXIF = 0;
     IFS2bits.U4TXIF = 0;
 
-    // IRQ RX (penser à vider tout le FIFO dans l'ISR)
+    // Activer l'IRQ RX (l?ISR est dans uart_rx.c)
     IEC2bits.U4RXIE = 1;
     IEC2bits.U4TXIE = 0;
     IPC9bits.U4IP   = 5;
@@ -85,35 +62,27 @@ void UART_Init(void)
     U4MODEbits.ON = 1;
 }
 
-// --- API "octet" via trame 9 bits ---
+/* ---------- API émission "octet" ---------- */
 void UART4_PutByte(uint8_t b) {
-    uint16_t v9 = (uint16_t)b;      // MSB=0
-    UART4_PutChar9(v9);
+    UART4_PutChar9((uint16_t)b); // MSB=0
 }
 
 void UART4_PutByteOddParity(uint8_t b) {
     uint16_t v9 = (uint16_t)b;
-    v9 |= ((uint16_t)odd_parity_flag8(b) << 8);
+    v9 |= ((uint16_t)odd_parity8(b) << 8);
     UART4_PutChar9(v9);
 }
 
-// --- Helpers 10 bits -> 8 MSB + 2 LSB ---
+/* ---------- Helpers 10 bits -> 8 MSB + 2 LSB ---------- */
 typedef struct { uint8_t msb8, lsb2; } packed10_t;
 
-static inline packed10_t pack10(uint16_t sample10) {
-    packed10_t p;
-    p.msb8 = (uint8_t)(sample10 >> 2); // bits 9..2
-    p.lsb2 = (uint8_t)(sample10 & 0x03); // bits 1..0
-    return p;
+static inline uint8_t top8_from_10bits(uint16_t s10) { return (uint8_t)(s10 >> 2); }
+static inline packed10_t pack10(uint16_t s10) {
+    packed10_t p; p.msb8 = (uint8_t)(s10 >> 2); p.lsb2 = (uint8_t)(s10 & 0x03); return p;
 }
 
-static inline uint8_t top8_from_10bits(uint16_t sample10) {
-    return (uint8_t)(sample10 >> 2);     // 8 MSB
-}
-
-// === Option 1 : n'envoyer que les 8 MSB ===
-void UART4_SendADC_8MSB_in_9bit(const volatile uint16_t *adcBuf,
-                                size_t count, bool withOddParity)
+/* ---------- Envoi buffer ADC en 8 MSB (1 octet/échantillon) ---------- */
+void UART4_SendADC_8MSB_in_9bit(const volatile uint16_t *adcBuf, size_t count, bool withOddParity)
 {
     size_t i;
     for (i = 0; i < count; i++) {
@@ -123,25 +92,18 @@ void UART4_SendADC_8MSB_in_9bit(const volatile uint16_t *adcBuf,
     }
 }
 
-// === Option 2 : 10 bits -> (8 MSB) + (2 LSB) ===
-void UART4_SendADC_10bits_in_9bit(const volatile uint16_t *adcBuf,
-                                  size_t count, bool withOddParity)
+/* ---------- Envoi buffer ADC "10 bits scindés" (2 octets/échantillon) ---------- */
+void UART4_SendADC_10bits_in_9bit(const volatile uint16_t *adcBuf, size_t count, bool withOddParity)
 {
     size_t i;
     for (i = 0; i < count; i++) {
         packed10_t p = pack10(adcBuf[i]);
-
-        // Paquet 1 : 8 MSB
-        if (withOddParity) UART4_PutByteOddParity(p.msb8);
-        else               UART4_PutByte(p.msb8);
-
-        // Paquet 2 : 2 LSB (dans bits[1:0], le reste = 0)
-        if (withOddParity) UART4_PutByteOddParity(p.lsb2);
-        else               UART4_PutByte(p.lsb2);
+        if (withOddParity) { UART4_PutByteOddParity(p.msb8); UART4_PutByteOddParity(p.lsb2); }
+        else               { UART4_PutByte(p.msb8);         UART4_PutByte(p.lsb2);         }
     }
 }
 
-// === Raccourci : envoi du buffer ADC global ===
+/* ---------- Raccourci : envoyer le buffer ADC global ---------- */
 void UART4_StartTransmitRecorded(bool full10bits, bool withOddParity)
 {
     extern volatile uint16_t audioBuffer[BUFFER_SIZE];
@@ -153,86 +115,3 @@ void UART4_StartTransmitRecorded(bool full10bits, bool withOddParity)
     if (full10bits) UART4_SendADC_10bits_in_9bit(audioBuffer, count, withOddParity);
     else            UART4_SendADC_8MSB_in_9bit  (audioBuffer, count, withOddParity);
 }
-
-// === RX ISR : vide complètement le FIFO + (option) vérif parité logicielle ===
-void __ISR(_UART_4_VECTOR, IPL5SOFT) U4RX_ISR(void)
-{
-    while (U4STAbits.URXDA) {
-        uint16_t rx = U4RXREG;           // lit un mot 9 bits (bit8 = MSB/?parité soft?)
-
-        // (Option) Vérif parité impaire logicielle si tu l'utilises :
-        // uint8_t d8  = (uint8_t)(rx & 0xFF);
-        // uint8_t msb = (uint8_t)((rx >> 8) & 1u);
-        // if (msb != odd_parity_flag8(d8)) {
-        //     // TODO: allumer LD5, log, etc.
-        // }
-
-        uart_rxbuf_push(rx);             // stocker pour traitement ultérieur si besoin
-    }
-    IFS2bits.U4RXIF = 0;                 // clear flag
-}
-
-void UART4_SendSinus(void){
-    int i;
-    for (i = 0; i < 20; i++) {
-        while (U4STAbits.UTXBF) { }
-        U4TXREG = (uint8_t)(test_400Hz[i] >> 2);
-    }
-}
-
-void UART4_SendSample(void){
-    unsigned int i;
-    for (i = 0; i < 64000; i++) {
-        while (U4STAbits.UTXBF) { }
-        U4TXREG = (uint8_t)(buffer[i] >> 2); // 8 MSB seulement
-    }
-}
-
-
-// Déclarations globales (RX mini-buffer)
-#define RX_MINI_SZ 512
-static volatile uint8_t  rxBuf[RX_MINI_SZ];
-static volatile unsigned short rx_w = 0, rx_r = 0;
-
-static inline unsigned short nxt(unsigned short x){ return (unsigned short)((x+1u)%RX_MINI_SZ); }
-static inline int fifo_empty(void){ return (rx_w == rx_r); }
-static inline void rx_push(uint8_t v){
-    unsigned short n = nxt(rx_w);
-    if (n == rx_r){ rx_r = nxt(rx_r); } // drop oldest si plein
-    rxBuf[rx_w] = v; rx_w = n;
-}
-
-// (Option) fonction de parité impaire logicielle
-static inline uint8_t odd_parity8(uint8_t d) {
-    d ^= (uint8_t)(d >> 4); d ^= (uint8_t)(d >> 2); d ^= (uint8_t)(d >> 1);
-    return (uint8_t)(~d) & 1u;
-}
-
-void __ISR(_UART_4_VECTOR, IPL2AUTO) UART4_RX_ISR(void)
-{
-    // Gérer un éventuel overrun avant de lire
-    if (U4STAbits.OERR) {
-        (void)U4RXREG;      // vide une fois
-        U4STAbits.OERR = 0; // relance le module RX
-    }
-
-    while (U4STAbits.URXDA) {
-        // Lire mot reçu (si mode 9 bits) ou octet (si 8 bits)
-        uint16_t rx = U4RXREG;             // mot 9 bits si PDSEL=0b11
-        uint8_t  d8 = (uint8_t)(rx & 0xFF);
-        uint8_t  msb = (uint8_t)((rx >> 8) & 1u);
-
-        // (Option APP) Vérifier parité impaire logicielle
-        // if (msb != odd_parity8(d8)) { /* LD5 = 1; log erreur */ }
-
-        // Pousser l'échantillon 8 MSB dans le buffer (lecture à 8 kHz ailleurs)
-        rx_push(d8);
-    }
-
-    // Signaler et purger les autres erreurs si tu veux diagnostiquer :
-    // if (U4STAbits.FERR) { /* framing error */ }
-    // if (U4STAbits.PERR) { /* parity error (matérielle) */ }
-
-    IFS2bits.U4RXIF = 0; // clear flag
-}
-

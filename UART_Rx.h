@@ -1,33 +1,19 @@
-#ifndef _UART_H
-#define _UART_H
+#ifndef _UART_RX_H
+#define _UART_RX_H
 
 #include <stdint.h>
-#include <stddef.h>
 #include <stdbool.h>
+#include "UART.h"
 
-// --- Init UART4 : 9 bits (PDSEL=0b11), 2 stop (STSEL=1), ~115200 bps (BRGH=0, BRG=21)
-void UART_Init(void);
+/* Pop 1 octet du buffer RX (retourne 1 si OK, 0 si vide). */
+int UART_RxPop(uint8_t *out);
 
-// --- Emission "octet" via trames 9 bits (bit 8 = 0 ou parité impaire logicielle)
-void UART4_PutByte(uint8_t b);          // 8 bits, MSB=0
-void UART4_PutByteOddParity(uint8_t b); // 8 bits + parité impaire logicielle en bit 8
+/* (Option) Helpers de lecture ?live? contrôlée par drapeaux. */
+extern volatile uint8_t g_playActive;     /* 1 = jouer via Timer 8 kHz */
+void Stream_Start(void);                  /* Reset FIFO + active lecture live */
+void Stream_Stop(void);                   /* Désactive lecture live         */
 
-// --- Envoi du tampon ADC (10 bits) vers UART (mode 9 bits)
-// Option 1 : n'envoyer que les 8 MSB (débit moindre)
-void UART4_SendADC_8MSB_in_9bit(const volatile uint16_t *adcBuf,
-                                size_t count, bool withOddParity);
+/* NB: L?ISR UART4 RX est DÉFINIE dans uart_rx.c (UNE seule ISR pour _UART_4_VECTOR). */
+/* NB: L?ISR Timer 8 kHz qui dépile 1 échantillon/tick est dans ton module timers/play. */
 
-// Option 2 : scinder 10 bits -> (8 MSB) + (2 LSB)
-void UART4_SendADC_10bits_in_9bit(const volatile uint16_t *adcBuf,
-                                  size_t count, bool withOddParity);
-
-// Raccourci : envoi du buffer ADC global (défini dans ADC.c)
-void UART4_StartTransmitRecorded(bool full10bits, bool withOddParity);
-
-// (Optionnel) Buffer RX si tu veux stocker ce que tu reçois
-#define UART_RX_BUF_SIZE  512//2048
-extern volatile uint16_t g_uartRxBuf[UART_RX_BUF_SIZE]; // mot 9 bits (bit8=MSB)
-extern volatile size_t   g_uartRxWr;
-extern volatile size_t   g_uartRxRd;
-
-#endif // _UART_H
+#endif /* _UART_RX_H */

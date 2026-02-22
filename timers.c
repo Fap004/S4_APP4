@@ -28,6 +28,7 @@
 #include "mef.h"
 #include "test.h"
 #include "button.h"
+#include "UART_Rx.h"
  
 void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1ISR(void) 
 {  
@@ -100,53 +101,46 @@ void Timer3_config()
     T3CONbits.ON = 1;           // On met le timer à ON
 }
 
+
 void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
 {
     switch(Etat)
     {
         case ETAT_LIRE:
-            if (ADC_index < BUFFER_SIZE)
-            {
+            if (ADC_index < BUFFER_SIZE) {
                 OC1RS = (uint16_t)(audioBuffer[ADC_index++]);
             }
             break;
 
         case ETAT_TEST:
-            
-            if (test_index < BUFFER_SIZE_TEST)
-            {
+            if (test_index < BUFFER_SIZE_TEST) {
                 OC1RS = (uint16_t)(test_buffer[test_index++]);
-            }
-            else 
-            {
-                test_index = 0;     // boucle sur un cycle
-                test_cpt++;         // avance le compteur total
+            } else {
+                test_index = 0;
+                test_cpt++;
             }
             break;
-            
-            case ETAT_COM:
-           
-            if (rx_w != rx_r) {
-                uint8_t d8 = rxBuf[rx_r];
-                rx_r = nxt(rx_r);
 
-                // Remonter 8->10 bits (pour PWM/OC)
+        case ETAT_COM:
+        {
+            uint8_t d8;
+            if (UART_RxPop(&d8)) {
                 unsigned short sample10 = ((unsigned short)d8) << 2;
                 OC1RS = sample10;
             } else {
-                OC1RS = 0; // sous-remplissage : silence (ou maintiens dernière valeur)
+                OC1RS = 0;
             }
+        }
+        break;
 
-            IFS0bits.T3IF = 0;
-
-            break;
-            
         default:
             break;
     }
-    tick_ms++;              //compteur pour le deboucing des boutons
-    IFS0bits.T3IF = 0;      // clear interrupt flag
+
+    tick_ms++;            // debouncing
+    IFS0bits.T3IF = 0;    // <-- clear unique du flag ici
 }
+
 
 void Timer3_stop(){
     T3CONbits.ON = 0;
