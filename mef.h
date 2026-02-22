@@ -5,7 +5,8 @@ typedef enum {
     ETAT_ATT,
     ETAT_EN,       
     ETAT_LIRE,
-    ETAT_TEST
+    ETAT_TEST,
+    ETAT_COM
 } Etat_t;
 
 extern volatile Etat_t Etat;

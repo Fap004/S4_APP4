@@ -57,17 +57,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=ADC.c led.c main.c microphone.c timers.c OC.c test.c mef.c sys_init.c volume.c play.c speaker.c recording.c button.c UART.c
+SOURCEFILES_QUOTED_IF_SPACED=ADC.c led.c main.c microphone.c timers.c OC.c test.c mef.c sys_init.c volume.c play.c speaker.c recording.c button.c UART.c labUart.c
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/ADC.o ${OBJECTDIR}/led.o ${OBJECTDIR}/main.o ${OBJECTDIR}/microphone.o ${OBJECTDIR}/timers.o ${OBJECTDIR}/OC.o ${OBJECTDIR}/test.o ${OBJECTDIR}/mef.o ${OBJECTDIR}/sys_init.o ${OBJECTDIR}/volume.o ${OBJECTDIR}/play.o ${OBJECTDIR}/speaker.o ${OBJECTDIR}/recording.o ${OBJECTDIR}/button.o ${OBJECTDIR}/UART.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/ADC.o.d ${OBJECTDIR}/led.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/microphone.o.d ${OBJECTDIR}/timers.o.d ${OBJECTDIR}/OC.o.d ${OBJECTDIR}/test.o.d ${OBJECTDIR}/mef.o.d ${OBJECTDIR}/sys_init.o.d ${OBJECTDIR}/volume.o.d ${OBJECTDIR}/play.o.d ${OBJECTDIR}/speaker.o.d ${OBJECTDIR}/recording.o.d ${OBJECTDIR}/button.o.d ${OBJECTDIR}/UART.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/ADC.o ${OBJECTDIR}/led.o ${OBJECTDIR}/main.o ${OBJECTDIR}/microphone.o ${OBJECTDIR}/timers.o ${OBJECTDIR}/OC.o ${OBJECTDIR}/test.o ${OBJECTDIR}/mef.o ${OBJECTDIR}/sys_init.o ${OBJECTDIR}/volume.o ${OBJECTDIR}/play.o ${OBJECTDIR}/speaker.o ${OBJECTDIR}/recording.o ${OBJECTDIR}/button.o ${OBJECTDIR}/UART.o ${OBJECTDIR}/labUart.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/ADC.o.d ${OBJECTDIR}/led.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/microphone.o.d ${OBJECTDIR}/timers.o.d ${OBJECTDIR}/OC.o.d ${OBJECTDIR}/test.o.d ${OBJECTDIR}/mef.o.d ${OBJECTDIR}/sys_init.o.d ${OBJECTDIR}/volume.o.d ${OBJECTDIR}/play.o.d ${OBJECTDIR}/speaker.o.d ${OBJECTDIR}/recording.o.d ${OBJECTDIR}/button.o.d ${OBJECTDIR}/UART.o.d ${OBJECTDIR}/labUart.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/ADC.o ${OBJECTDIR}/led.o ${OBJECTDIR}/main.o ${OBJECTDIR}/microphone.o ${OBJECTDIR}/timers.o ${OBJECTDIR}/OC.o ${OBJECTDIR}/test.o ${OBJECTDIR}/mef.o ${OBJECTDIR}/sys_init.o ${OBJECTDIR}/volume.o ${OBJECTDIR}/play.o ${OBJECTDIR}/speaker.o ${OBJECTDIR}/recording.o ${OBJECTDIR}/button.o ${OBJECTDIR}/UART.o
+OBJECTFILES=${OBJECTDIR}/ADC.o ${OBJECTDIR}/led.o ${OBJECTDIR}/main.o ${OBJECTDIR}/microphone.o ${OBJECTDIR}/timers.o ${OBJECTDIR}/OC.o ${OBJECTDIR}/test.o ${OBJECTDIR}/mef.o ${OBJECTDIR}/sys_init.o ${OBJECTDIR}/volume.o ${OBJECTDIR}/play.o ${OBJECTDIR}/speaker.o ${OBJECTDIR}/recording.o ${OBJECTDIR}/button.o ${OBJECTDIR}/UART.o ${OBJECTDIR}/labUart.o
 
 # Source Files
-SOURCEFILES=ADC.c led.c main.c microphone.c timers.c OC.c test.c mef.c sys_init.c volume.c play.c speaker.c recording.c button.c UART.c
+SOURCEFILES=ADC.c led.c main.c microphone.c timers.c OC.c test.c mef.c sys_init.c volume.c play.c speaker.c recording.c button.c UART.c labUart.c
 
 
 
@@ -197,6 +197,12 @@ ${OBJECTDIR}/UART.o: UART.c  .generated_files/flags/default/2999274f8d8fdc585a60
 	@${RM} ${OBJECTDIR}/UART.o 
 	${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -fframe-base-loclist  -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/UART.o.d" -o ${OBJECTDIR}/UART.o UART.c    -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -mdfp="${DFP_DIR}"  
 	
+${OBJECTDIR}/labUart.o: labUart.c  .generated_files/flags/default/e1a7ab1cb41063cc8c2fdcc702fb8288e251e274 .generated_files/flags/default/9482caba2dc1e17ca639a65609d3577e06590893
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/labUart.o.d 
+	@${RM} ${OBJECTDIR}/labUart.o 
+	${MP_CC}  $(MP_EXTRA_CC_PRE) -g -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1  -fframe-base-loclist  -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/labUart.o.d" -o ${OBJECTDIR}/labUart.o labUart.c    -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -mdfp="${DFP_DIR}"  
+	
 else
 ${OBJECTDIR}/ADC.o: ADC.c  .generated_files/flags/default/6b9b7b57f6cb9e8048a66df1b50f524704752718 .generated_files/flags/default/9482caba2dc1e17ca639a65609d3577e06590893
 	@${MKDIR} "${OBJECTDIR}" 
@@ -287,6 +293,12 @@ ${OBJECTDIR}/UART.o: UART.c  .generated_files/flags/default/db3d7513f89071ffcb92
 	@${RM} ${OBJECTDIR}/UART.o.d 
 	@${RM} ${OBJECTDIR}/UART.o 
 	${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/UART.o.d" -o ${OBJECTDIR}/UART.o UART.c    -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -mdfp="${DFP_DIR}"  
+	
+${OBJECTDIR}/labUart.o: labUart.c  .generated_files/flags/default/aa8b4bace4641973bbab98521cd0e8f3871c492d .generated_files/flags/default/9482caba2dc1e17ca639a65609d3577e06590893
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/labUart.o.d 
+	@${RM} ${OBJECTDIR}/labUart.o 
+	${MP_CC}  $(MP_EXTRA_CC_PRE)  -g -x c -c -mprocessor=$(MP_PROCESSOR_OPTION)  -MP -MMD -MF "${OBJECTDIR}/labUart.o.d" -o ${OBJECTDIR}/labUart.o labUart.c    -DXPRJ_default=$(CND_CONF)  -legacy-libc  $(COMPARISON_BUILD)  -mdfp="${DFP_DIR}"  
 	
 endif
 

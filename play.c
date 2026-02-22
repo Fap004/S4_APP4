@@ -51,7 +51,6 @@ int play(void)
         OC_stop();
         Timer2_stop();
         Timer1_stop();
-        //Timer3_stop();
         return 1;       // terminé
     }
     

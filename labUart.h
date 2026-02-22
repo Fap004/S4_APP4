@@ -14,16 +14,13 @@
     Describe the purpose of this file.
  */
 /* ************************************************************************** */
-#ifndef _LABUART_H    /* Guard against multiple inclusion */#
-#define _LABUART_H
+//#ifndef _LABUART_H    /* Guard against multiple inclusion */
+//#define _LABUART_H
 
-void uartInit();
-void UART4_PutChar(unsigned char c);
-void UART4_PutString(const char *str);
-
-#endif /* _EXAMPLE_FILE_NAME_H */
-
-#endif /* _EXAMPLE_FILE_NAME_H */
+//void uartInit();
+//void UART4_PutChar(unsigned char c);
+//void UART4_PutString(const char *str);
+//#endif /* _EXAMPLE_FILE_NAME_H */
 
 /* *****************************************************************************
  End of File

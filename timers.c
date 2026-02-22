@@ -124,6 +124,19 @@ void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
             }
             break;
             
+            case ETAT_COM:
+            
+            if (test_index < BUFFER_SIZE_TEST)
+            {
+                OC1RS = (uint16_t)(test_buffer[test_index++]);
+            }
+            else 
+            {
+                test_index = 0;     // boucle sur un cycle
+                test_cpt++;         // avance le compteur total
+            }
+            break;
+            
         default:
             break;
     }

@@ -1,3 +1,4 @@
+/*
 #include <xc.h>
 #include "uart.h"
 #include "config.h"
@@ -31,11 +32,9 @@ void UART4_PutChar(unsigned char c){
     }
 }
 
-void UART4_PutString(const char *str)
-{
-    while(*str != '\0')
-    {
-        UART4_PutChar(*str);
-        str++;
-    }
+void UART4_PutChar(unsigned short v9) {
+    // v9 = 0..0x1FF si PDSEL=0b11 (9 bits)
+    while (U4STAbits.UTXBF) { // attendre qu'il y ait de la place  }
+    U4TXREG = v9;    // en mode 9 bits, le bit 8 est transmis aussi
 }
+*/
