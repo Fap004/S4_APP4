@@ -1,0 +1,18 @@
+# MPLAB X generated files
+build/
+dist/
+.generated_files/
+
+# MPLAB user-specific files
+nbproject/private/
+
+# Compiled outputs
+*.o
+*.elf
+*.hex
+*.map
+*.lst
+
+# OS / IDE
+.DS_Store
+Thumbs.db
