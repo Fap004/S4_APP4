@@ -125,16 +125,20 @@ void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
             break;
             
             case ETAT_COM:
-            
-            if (test_index < BUFFER_SIZE_TEST)
-            {
-                OC1RS = (uint16_t)(test_buffer[test_index++]);
+           
+            if (rx_w != rx_r) {
+                uint8_t d8 = rxBuf[rx_r];
+                rx_r = nxt(rx_r);
+
+                // Remonter 8->10 bits (pour PWM/OC)
+                unsigned short sample10 = ((unsigned short)d8) << 2;
+                OC1RS = sample10;
+            } else {
+                OC1RS = 0; // sous-remplissage : silence (ou maintiens dernière valeur)
             }
-            else 
-            {
-                test_index = 0;     // boucle sur un cycle
-                test_cpt++;         // avance le compteur total
-            }
+
+            IFS0bits.T3IF = 0;
+
             break;
             
         default:
