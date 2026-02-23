@@ -77,9 +77,9 @@ int test_tx(void)
     //configure les timers, le Oc et initi les valeurs à 0 pour recommencer a neuf
     if (!started)
     {
-        Timer2_config();
-        Timer3_config();
-        OC_config();
+        //Timer2_config();
+        //Timer3_config();
+        //OC_config();
         
         started = 1;
         test_index = 0;

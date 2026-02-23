@@ -57,17 +57,17 @@ OBJECTDIR=build/${CND_CONF}/${IMAGE_TYPE}
 DISTDIR=dist/${CND_CONF}/${IMAGE_TYPE}
 
 # Source Files Quoted if spaced
-SOURCEFILES_QUOTED_IF_SPACED=ADC.c led.c main.c microphone.c timers.c OC.c test.c mef.c sys_init.c volume.c play.c speaker.c recording.c button.c UART.c labUart.c UART_Tx.c UART_Rx.c
+SOURCEFILES_QUOTED_IF_SPACED=ADC.c led.c main.c microphone.c timers.c OC.c test.c mef.c sys_init.c volume.c play.c speaker.c recording.c button.c UART.c labUart.c UART_Tx.c UART_Rx.c parite_S.S
 
 # Object Files Quoted if spaced
-OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/ADC.o ${OBJECTDIR}/led.o ${OBJECTDIR}/main.o ${OBJECTDIR}/microphone.o ${OBJECTDIR}/timers.o ${OBJECTDIR}/OC.o ${OBJECTDIR}/test.o ${OBJECTDIR}/mef.o ${OBJECTDIR}/sys_init.o ${OBJECTDIR}/volume.o ${OBJECTDIR}/play.o ${OBJECTDIR}/speaker.o ${OBJECTDIR}/recording.o ${OBJECTDIR}/button.o ${OBJECTDIR}/UART.o ${OBJECTDIR}/labUart.o ${OBJECTDIR}/UART_Tx.o ${OBJECTDIR}/UART_Rx.o
-POSSIBLE_DEPFILES=${OBJECTDIR}/ADC.o.d ${OBJECTDIR}/led.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/microphone.o.d ${OBJECTDIR}/timers.o.d ${OBJECTDIR}/OC.o.d ${OBJECTDIR}/test.o.d ${OBJECTDIR}/mef.o.d ${OBJECTDIR}/sys_init.o.d ${OBJECTDIR}/volume.o.d ${OBJECTDIR}/play.o.d ${OBJECTDIR}/speaker.o.d ${OBJECTDIR}/recording.o.d ${OBJECTDIR}/button.o.d ${OBJECTDIR}/UART.o.d ${OBJECTDIR}/labUart.o.d ${OBJECTDIR}/UART_Tx.o.d ${OBJECTDIR}/UART_Rx.o.d
+OBJECTFILES_QUOTED_IF_SPACED=${OBJECTDIR}/ADC.o ${OBJECTDIR}/led.o ${OBJECTDIR}/main.o ${OBJECTDIR}/microphone.o ${OBJECTDIR}/timers.o ${OBJECTDIR}/OC.o ${OBJECTDIR}/test.o ${OBJECTDIR}/mef.o ${OBJECTDIR}/sys_init.o ${OBJECTDIR}/volume.o ${OBJECTDIR}/play.o ${OBJECTDIR}/speaker.o ${OBJECTDIR}/recording.o ${OBJECTDIR}/button.o ${OBJECTDIR}/UART.o ${OBJECTDIR}/labUart.o ${OBJECTDIR}/UART_Tx.o ${OBJECTDIR}/UART_Rx.o ${OBJECTDIR}/parite_S.o
+POSSIBLE_DEPFILES=${OBJECTDIR}/ADC.o.d ${OBJECTDIR}/led.o.d ${OBJECTDIR}/main.o.d ${OBJECTDIR}/microphone.o.d ${OBJECTDIR}/timers.o.d ${OBJECTDIR}/OC.o.d ${OBJECTDIR}/test.o.d ${OBJECTDIR}/mef.o.d ${OBJECTDIR}/sys_init.o.d ${OBJECTDIR}/volume.o.d ${OBJECTDIR}/play.o.d ${OBJECTDIR}/speaker.o.d ${OBJECTDIR}/recording.o.d ${OBJECTDIR}/button.o.d ${OBJECTDIR}/UART.o.d ${OBJECTDIR}/labUart.o.d ${OBJECTDIR}/UART_Tx.o.d ${OBJECTDIR}/UART_Rx.o.d ${OBJECTDIR}/parite_S.o.d
 
 # Object Files
-OBJECTFILES=${OBJECTDIR}/ADC.o ${OBJECTDIR}/led.o ${OBJECTDIR}/main.o ${OBJECTDIR}/microphone.o ${OBJECTDIR}/timers.o ${OBJECTDIR}/OC.o ${OBJECTDIR}/test.o ${OBJECTDIR}/mef.o ${OBJECTDIR}/sys_init.o ${OBJECTDIR}/volume.o ${OBJECTDIR}/play.o ${OBJECTDIR}/speaker.o ${OBJECTDIR}/recording.o ${OBJECTDIR}/button.o ${OBJECTDIR}/UART.o ${OBJECTDIR}/labUart.o ${OBJECTDIR}/UART_Tx.o ${OBJECTDIR}/UART_Rx.o
+OBJECTFILES=${OBJECTDIR}/ADC.o ${OBJECTDIR}/led.o ${OBJECTDIR}/main.o ${OBJECTDIR}/microphone.o ${OBJECTDIR}/timers.o ${OBJECTDIR}/OC.o ${OBJECTDIR}/test.o ${OBJECTDIR}/mef.o ${OBJECTDIR}/sys_init.o ${OBJECTDIR}/volume.o ${OBJECTDIR}/play.o ${OBJECTDIR}/speaker.o ${OBJECTDIR}/recording.o ${OBJECTDIR}/button.o ${OBJECTDIR}/UART.o ${OBJECTDIR}/labUart.o ${OBJECTDIR}/UART_Tx.o ${OBJECTDIR}/UART_Rx.o ${OBJECTDIR}/parite_S.o
 
 # Source Files
-SOURCEFILES=ADC.c led.c main.c microphone.c timers.c OC.c test.c mef.c sys_init.c volume.c play.c speaker.c recording.c button.c UART.c labUart.c UART_Tx.c UART_Rx.c
+SOURCEFILES=ADC.c led.c main.c microphone.c timers.c OC.c test.c mef.c sys_init.c volume.c play.c speaker.c recording.c button.c UART.c labUart.c UART_Tx.c UART_Rx.c parite_S.S
 
 
 
@@ -101,7 +101,23 @@ endif
 # ------------------------------------------------------------------------------------
 # Rules for buildStep: assembleWithPreprocess
 ifeq ($(TYPE_IMAGE), DEBUG_RUN)
+${OBJECTDIR}/parite_S.o: parite_S.S  .generated_files/flags/default/d706922a3019996c9efa3ffcad8c2d910d229c46 .generated_files/flags/default/9482caba2dc1e17ca639a65609d3577e06590893
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/parite_S.o.d 
+	@${RM} ${OBJECTDIR}/parite_S.o 
+	@${RM} ${OBJECTDIR}/parite_S.o.ok ${OBJECTDIR}/parite_S.o.err 
+	${MP_CC} $(MP_EXTRA_AS_PRE)  -D__DEBUG -D__MPLAB_DEBUGGER_PK3=1 -c -mprocessor=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/parite_S.o.d"  -o ${OBJECTDIR}/parite_S.o parite_S.S  -DXPRJ_default=$(CND_CONF)  -legacy-libc  -Wa,--defsym=__MPLAB_BUILD=1$(MP_EXTRA_AS_POST),-MD="${OBJECTDIR}/parite_S.o.asm.d",--defsym=__ICD2RAM=1,--defsym=__MPLAB_DEBUG=1,--gdwarf-2,--defsym=__DEBUG=1,--defsym=__MPLAB_DEBUGGER_PK3=1 -mdfp="${DFP_DIR}"
+	@${FIXDEPS} "${OBJECTDIR}/parite_S.o.d" "${OBJECTDIR}/parite_S.o.asm.d" -t $(SILENT) -rsi ${MP_CC_DIR}../ 
+	
 else
+${OBJECTDIR}/parite_S.o: parite_S.S  .generated_files/flags/default/1f3519fbffc88e3de34359a54cbb7309153417c6 .generated_files/flags/default/9482caba2dc1e17ca639a65609d3577e06590893
+	@${MKDIR} "${OBJECTDIR}" 
+	@${RM} ${OBJECTDIR}/parite_S.o.d 
+	@${RM} ${OBJECTDIR}/parite_S.o 
+	@${RM} ${OBJECTDIR}/parite_S.o.ok ${OBJECTDIR}/parite_S.o.err 
+	${MP_CC} $(MP_EXTRA_AS_PRE)  -c -mprocessor=$(MP_PROCESSOR_OPTION)  -MMD -MF "${OBJECTDIR}/parite_S.o.d"  -o ${OBJECTDIR}/parite_S.o parite_S.S  -DXPRJ_default=$(CND_CONF)  -legacy-libc  -Wa,--defsym=__MPLAB_BUILD=1$(MP_EXTRA_AS_POST),-MD="${OBJECTDIR}/parite_S.o.asm.d",--gdwarf-2 -mdfp="${DFP_DIR}"
+	@${FIXDEPS} "${OBJECTDIR}/parite_S.o.d" "${OBJECTDIR}/parite_S.o.asm.d" -t $(SILENT) -rsi ${MP_CC_DIR}../ 
+	
 endif
 
 # ------------------------------------------------------------------------------------

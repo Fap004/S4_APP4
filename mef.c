@@ -30,9 +30,10 @@
 #include "UART_Rx.h"
 #include "UART_Tx.h"
 #include "timers.h"
+#include <sys/attribs.h>
 
 //Machine à état fini permettant la gestion des modes
-void mef() 
+void mef()
 {
     // ===============================
     // PRIORITÉ INTERCOM
@@ -44,10 +45,22 @@ void mef()
 
     switch (Etat)
     {
+        case ETAT_INTERCOM:
+            if (intercom())
+            {
+                Etat = ETAT_ATT;
+            }
+            OnLed(2);
+        break;
         case ETAT_ATT:
             T1CONbits.ON = 0;
+            OffLed(0);
+            OffLed(1);
+            OffLed(2);
+            OffLed(3);
             OffLed(4);
-            OnLed(6);
+            OffLed(5);
+            //OnLed(6);
 
             // Lecture boutons seulement en attente
             if (bouton_appuye(PORTBbits.RB8, &btnR)) 
@@ -90,19 +103,13 @@ void mef()
             break;
 
         case ETAT_EN_TX:
-            // ici tu peux faire autre chose si tu veux, sinon juste attendre
+            if (enr_tx())
+                Etat = ETAT_ATT;
             break;
 
         case ETAT_TEST_TX:
             if (test_tx())
                 Etat = ETAT_ATT;
-            break;
-
-        case ETAT_INTERCOM:
-            if (!PORTFbits.RF3)   // Sort seulement si switch OFF
-                Etat = ETAT_ATT;
-            else
-                test();  // ou fonction intercom réelle
             break;
     }
 }

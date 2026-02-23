@@ -47,7 +47,7 @@ void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1ISR(void)
 {  
 // Code de l'ISR ici
     
-  LATAbits.LATA1 ^= 1;  
+  //LATAbits.LATA1 ^= 1;  
   IFS0bits.T1IF = 0; // clear interrupt flag
 }
 
@@ -131,6 +131,20 @@ void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
                 test_cpt++;
             }
         }
+        if (Etat == ETAT_EN_TX)
+        {
+            if (ADC_index < BUFFER_SIZE) 
+            {
+                UART4_SendRecording();
+                ADC_index++;
+            } 
+            else
+            {
+                ADC_index=0;
+                //OC1RS = 0;
+            }
+        }
+        
     uint8_t byte;
     if (uart_rx_pop(&byte))
         {
@@ -153,7 +167,8 @@ void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
                     break;
 
                 case ETAT_TEST:
-                    if (test_index < BUFFER_SIZE_TEST) {
+                    if (test_index < BUFFER_SIZE_TEST) 
+                    {
                         OC1RS = (uint16_t)(test_buffer[test_index++]);
                     } 
                     else

@@ -26,6 +26,7 @@
 #include "config_bits.h"
 #include "mef.h"
 #include "sys_init.h"
+#include "led.h"
 
 volatile Etat_t Etat = ETAT_ATT;    //Etat Attente soit celle initial
 
@@ -37,6 +38,16 @@ int main(void)
     while (1)
     {
         mef();              //MEF controlant les modes
+//    if (!PORTFbits.RF3)
+//    {
+//        OnLed(3); // intercom prioritaire
+//        OffLed(5);
+//    }
+//    if (PORTFbits.RF3)
+//    {
+//        OnLed(5); // intercom prioritaire
+//        OffLed(3);
+//    }
     //        gestion_volume();   //Gestion du volume
     }
 } 

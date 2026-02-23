@@ -166,3 +166,19 @@ void UART4_SendSample(void)
     }
 }
 
+void UART4_SendRecording(void)
+{
+    if (!U4STAbits.UTXBF) 
+    {
+        U4TXREG = (uint8_t)(audioBuffer[ADC_index] >> 2);
+    }
+}
+
+void UART4_SendIntercom(void)
+{
+    if (!U4STAbits.UTXBF) 
+    {
+        U4TXREG = (uint8_t)(ADC1BUF0 >> 2);
+    }
+}
+

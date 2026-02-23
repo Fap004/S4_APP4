@@ -40,7 +40,7 @@ void sys_init(void)
     UART_Init();         // RX/TX prêt avant Timer3 ISR
     switch_init();
     OC_config();         // config PWM avant timers si Timer3 pilote OC
-    Timer1_config();
+    //Timer1_config();
     Timer2_config();
     Timer3_config();     // Timer3 ISR actif à la fin
     macro_enable_interrupts();

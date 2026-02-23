@@ -24,6 +24,7 @@
 #include <sys/attribs.h>
 #include "config.h"
 #include "timers.h"
+#include "mef.h"
 
 volatile uint16_t audioBuffer[BUFFER_SIZE]; //stockage de la trame enregistrer
 volatile int ADC_index = 0;                 //Index permettant de naviguer dans le buffer
@@ -64,20 +65,29 @@ void ADC_Init()
 //Fonction sauvegardant le bruit du microphone apres avoir atteint le seuil et le delai
 void __ISR(_ADC_VECTOR, IPL7AUTO) ADC_ISR(void)
 {
-    if (ADC_index < BUFFER_SIZE)
+    if (Etat == ETAT_INTERCOM)
     {
-        audioBuffer[ADC_index++] = ADC1BUF0;
-        threshold = 1;
-        OnLed(0);
+        UART4_SendIntercom();
+        OnLed(5);
     }
     else
     {
-        compteur++;
-    }
+        OffLed(5);
+        if (ADC_index < BUFFER_SIZE)
+        {
+            audioBuffer[ADC_index++] = ADC1BUF0;
+            threshold = 1;
+            OnLed(0);
+        }
+        else
+        {
+            compteur++;
+        }
 
-    if (ADC_index >= BUFFER_SIZE)
-    {
-        ADC_Stop();
+        if (ADC_index >= BUFFER_SIZE)
+        {
+            ADC_Stop();
+        }
     }
 
     IFS0bits.AD1IF = 0;
