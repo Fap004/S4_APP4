@@ -56,5 +56,8 @@ void sys_init(void)
 void switch_init()
 {
     TRISFbits.TRISF3 = 1;  // RF3 (SW0) configured as input
+    
+    TRISBbits.TRISB9 = 1;	 // RB9 (SW7) configured as input
+    ANSELBbits.ANSB9 = 0;	 // RB9 (SW7) disabled analog
 }
  
