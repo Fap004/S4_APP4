@@ -36,14 +36,16 @@ void sys_init(void)
     boutons_init();
     speaker_init();
     micro_init();
-    OnLed(7);
-    Timer3_config();
-    UART_Init();
+    //ADC_Init();          // ADC avant timers si Timer déclenche lecture
+    UART_Init();         // RX/TX prêt avant Timer3 ISR
     switch_init();
-    Timer1_config;
-    Timer2_config;
-    Timer3_config;
+    OC_config();         // config PWM avant timers si Timer3 pilote OC
+    Timer1_config();
+    Timer2_config();
+    Timer3_config();     // Timer3 ISR actif à la fin
     macro_enable_interrupts();
+    
+    OnLed(7);
     
     //Initialisation pour l'analog discovery
     TRISBbits.TRISB6 = 0;

@@ -34,10 +34,10 @@ int play(void)
     //configure les timers, le Oc et initi les valeurs à 0 pour recommencer a neuf
     if (!started)
     {
-        Timer1_config();
-        Timer2_config();
-        Timer3_config();
-        OC_config();
+        //Timer1_config();
+        //Timer2_config();
+        //Timer3_config();
+        //OC_config();
         
         ADC_index = 0;
         started = 1;
@@ -48,9 +48,9 @@ int play(void)
     {
         OC1RS = 0;      //sortie sonore à 0
         started = 0;
-        OC_stop();
-        Timer2_stop();
-        Timer1_stop();
+        //OC_stop();
+        //Timer2_stop();
+        //Timer1_stop();
         return 1;       // terminé
     }
     
