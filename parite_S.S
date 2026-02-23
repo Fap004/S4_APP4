@@ -41,50 +41,58 @@ fin:
 .end ajout_parite_odd
     
 #-------------------------------------------------------------------------
-    
-.globl valider_parite_odd
-.ent valider_parite_odd
+ .globl VerifierParite_S
+/* Entrée : a0 = trame 9 bits reçue */
 
-valider_parite_odd:
+/* Action : Allume LD5 (RA5) si erreur, l'éteint au début */
+ 
+.ent VerifierParite_S
 
-    addi    sp, sp, -4
-    sw      ra, 0(sp)
+VerifierParite_S:
 
-    move    t0, a0          // copie donnée 9 bits
-    andi    t4, t0, 0x100   // extrait bit de parité
-    srl     t4, t4, 8       // place parité en bit 0
+    la      t4, LATACLR  // nouvelle adresse LATACLR
 
-    andi    t0, t0, 0xFF    // garde seulement 8 bits données
+    li      t5, 0b00100000 // masque DEL LD5    
 
-    move    t1, zero        // accumulateur XOR
-    li      t2, 8           // compteur
+    sw      t5, 0(t4) // masque dans LATACLR -> DEL LD5 à 0
+ 
+    move    t0, a0 // t0 = a0   
 
-boucle_val:
-    andi    t3, t0, 1
-    xor     t1, t1, t3
-    srl     t0, t0, 1
-    addi    t2, t2, -1
-    bnez    t2, boucle_val
+    li      t1, 0 // t1 = 1          
+
+    li      t2, 9 // t2 = 9         
+ 
+boucle_verif:
+
+    andi    t3, t0, 1 // t3 (temporaire) = t0 et 1 -> isole bit de droite
+
+    addu    t1, t1, t3 // t1 = t1 + t3 (unsigned)
+
+    srl     t0, t0, 1 // t0 décalé de 1 vers la droite
+
+    addiu   t2, t2, -1 // t2 = t2 - 1 -> décrémente le compteur (9 vers 0)
+
+    bne     t2, zero, boucle_verif // si compteur != 0 -> recommence boucle 
+
     nop
+ 
+    andi    t1, t1, 1 // si t1=0: somme paire. si t1=1: somme impaire
 
-    // t1 = parité des 8 bits
-    // t4 = bit de parité reçu
+    bne     t1, zero, fin_verif // si t1 = 1 -> fin vérification
 
-    xor     t5, t1, t4      // compare les deux
-
-    move    v0, t5          // 0 = OK, 1 = erreur
-    
-    beq     t5, zero, finVal   // si 0 ? pas d'erreur
     nop
+ 
+    la      t4, LATASET // nouvelle adresse LATASET
 
-    // --- ERREUR ? allumer DEL5 ---
-    li      a0, 5
-    jal     OnLed
-    nop
+    li      t5, 0b00100000 // masque DEL LD5 
 
-finVal:
-    lw      ra, 0(sp)
-    addi    sp, sp, 4
+    sw      t5, 0(t4) // masque dans LATASET -> DEL LD5 à 1
+ 
+fin_verif:
+
     jr      ra
+
     nop
-.end valider_parite_odd
+
+.end VerifierParite_S
+ 
