@@ -64,7 +64,7 @@ void ADC_Init()
 //Fonction sauvegardant le bruit du microphone apres avoir atteint le seuil et le delai
 void __ISR(_ADC_VECTOR, IPL7AUTO) ADC_ISR(void)
 {
-    if (ADC_index < BUFFER_SIZE && (ADC1BUF0 > 1000 || threshold) && compteur> 5000)
+    if (ADC_index < BUFFER_SIZE)
     {
         audioBuffer[ADC_index++] = ADC1BUF0;
         threshold = 1;

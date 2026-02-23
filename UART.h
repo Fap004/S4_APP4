@@ -28,6 +28,9 @@
 extern volatile uint8_t  uartRxBuf[UART_RX_BUF_SIZE];
 extern volatile unsigned short uartRxWr;
 extern volatile unsigned short uartRxRd;
+// quelque part (ex. uart_common.h)
+extern volatile uint8_t g_txActive;   // 1 => émet 1 octet/125us
+extern volatile uint8_t g_rxActive;   // 1 => joue 1 octet/125us
 
 /* Accès simple depuis le code application */
 static inline int UART_RxAvailable(void) {

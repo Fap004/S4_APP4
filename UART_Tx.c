@@ -6,9 +6,11 @@
 #include <sys/attribs.h>
 #include "config.h"
 
-//#include "UART.h"
 #include "UART_Tx.h"
 #include "ADC.h"   // audioBuffer[], ADC_index
+#include "test.h"
+
+volatile size_t test_tx_index = 0;   // indice courant dans test_buffer
 
 /* ---------- Parité impaire logicielle (sur 8 bits) ---------- */
 static inline uint8_t odd_parity8(uint8_t d) {
@@ -20,8 +22,8 @@ static inline uint8_t odd_parity8(uint8_t d) {
 
 /* ---------- Émission d?un mot 9 bits (PDSEL=0b11) ---------- */
 static inline void UART4_PutChar9(uint16_t v9) {
-    while (U4STAbits.UTXBF) { }  // attendre de la place dans le FIFO TX
-    U4TXREG = v9;                // en 9-bit mode, le bit 8 (MSB) est transmis
+    while (U4STAbits.UTXBF) { /* attendre de la place dans le FIFO TX */ }
+    U4TXREG = v9;             // en 9-bit mode, le bit 8 (MSB) est transmis
 }
 
 /* ---------- Initialisation UART4 ---------- */
@@ -33,30 +35,29 @@ void UART_Init(void)
     TRISFbits.TRISF12 = 0;
     TRISFbits.TRISF13 = 1;
 
-    // PPS (codes à confirmer dans la datasheet PIC32MX370)
-    U4RXRbits.U4RXR   = 0b0100;  // RF13 -> U4RX (vérifier le code exact)
-    RPF12Rbits.RPF12R = 0b0010;  // U4TX -> RF12 (vérifier le code exact)
-    // Entre deux cartes : TX<->RX croisés + GND commun.
-    
-    // Baud ~115200 @ PBCLK~40MHz (BRGH=0 => ÷16)
-    U4MODEbits.BRGH = UART_BRGH;      // 0
-    U4BRG = UART_U4BRG_DEFAULT;       // 21 (~115200 bps)
+    // PPS (codes à confirmer dans la datasheet device)
+    U4RXRbits.U4RXR   = 0b0100;  // RF13 -> U4RX  (vérifier code exact pour PIC32MX370)
+    RPF12Rbits.RPF12R = 0b0010;  // U4TX -> RF12  (vérifier code exact pour PIC32MX370)
+    // Entre 2 cartes : TX<->RX croisés + GND commun.
 
-    // Trame : 9 bits (sans parité matérielle), 2 stop (exigences APP)
+    // Baud ~115200 @ PBCLK ~40 MHz ou 48 MHz (BRGH=0 => ÷16)
+    U4MODEbits.BRGH = UART_BRGH;        // 0
+    U4BRG = UART_U4BRG_DEFAULT;         // 21 (~115200 bps typique)
+
+    // Trame : 9 bits (sans parité matérielle), 2 stop (conforme à l?APP)
     U4MODEbits.PDSEL = UART_PDSEL_9BIT_NOHWPAR; // 0b11
     U4MODEbits.STSEL = UART_STSEL_2STOP;        // 1
 
-    // Activer TX/RX avant ON (ordre recommandé
+    // Activer TX/RX AVANT ON (ordre recommandé par le FRM)
     U4STAbits.UTXEN = 1;
     U4STAbits.URXEN = 1;
 
+    // Nettoyage flags + config IRQ RX (l?ISR est dans uart_rx.c)
     IFS2bits.U4RXIF = 0;
     IFS2bits.U4TXIF = 0;
-
-    // Activer l'IRQ RX (l?ISR est dans uart_rx.c)
-    IEC2bits.U4RXIE = 1;
-    IEC2bits.U4TXIE = 0;
-    IPC9bits.U4IP   = 5;
+    IEC2bits.U4RXIE = 1;   // RX interrupt ON (réception en ISR)
+    IEC2bits.U4TXIE = 0;   // TX interrupt OFF (TX en polling)
+    IPC9bits.U4IP   = 5;   // doit matcher IPL5SOFT de l?ISR RX
     IPC9bits.U4IS   = 0;
 
     U4MODEbits.ON = 1;
@@ -64,7 +65,7 @@ void UART_Init(void)
 
 /* ---------- API émission "octet" ---------- */
 void UART4_PutByte(uint8_t b) {
-    UART4_PutChar9((uint16_t)b); // MSB=0
+    UART4_PutChar9((uint16_t)b); // MSB=0 (pas de parité logicielle)
 }
 
 void UART4_PutByteOddParity(uint8_t b) {
@@ -115,3 +116,22 @@ void UART4_StartTransmitRecorded(bool full10bits, bool withOddParity)
     if (full10bits) UART4_SendADC_10bits_in_9bit(audioBuffer, count, withOddParity);
     else            UART4_SendADC_8MSB_in_9bit  (audioBuffer, count, withOddParity);
 }
+
+// Renvoie true si tout le buffer a été transmis, false sinon
+bool UART4_SendTestBuffer_8MSB_NB(bool withOddParity)
+{
+    if (test_tx_index >= BUFFER_SIZE_TEST) {
+        test_tx_index = 0;      // reset pour la prochaine fois
+        return true;            // tout envoyé
+    }
+
+    uint8_t d8 = (uint8_t)(test_buffer[test_tx_index] >> 2);  // 8 MSB
+    if (withOddParity)
+        UART4_PutByteOddParity(d8);
+    else
+        UART4_PutByte(d8);
+
+    test_tx_index++;           // passer au prochain octet
+    return false;              // toujours en cours
+}
+

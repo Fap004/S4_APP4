@@ -43,7 +43,7 @@ int enregistrement(void)
     if (ADC_index >= BUFFER_SIZE)
     {
         ADC_Stop();
-        OffLed(0);
+        //OffLed(0);
         started = 0;
         threshold=0;
         return 1;   // terminé

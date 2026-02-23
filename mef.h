@@ -7,7 +7,7 @@ typedef enum {
     ETAT_LIRE,
     ETAT_TEST,
     ETAT_COM,
-    ETAT_LIRE_TX,
+    ETAT_EN_TX,
     ETAT_TEST_TX,
     ETAT_INTERCOM
 } Etat_t;

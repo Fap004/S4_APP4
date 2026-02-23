@@ -35,9 +35,9 @@ int main(void)
     Etat = ETAT_ATT;        // Assignation de l'état de base
 
     while (1)
-{
+    {
         mef();              //MEF controlant les modes
-        gestion_volume();   //Gestion du volume
-}
+    //        gestion_volume();   //Gestion du volume
+    }
 } 
 //test luis

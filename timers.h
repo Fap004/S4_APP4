@@ -1,6 +1,7 @@
 #ifndef _TIMERS_H
 #define _TIMERS_H
 
+extern volatile unsigned test_tx_index;
 
 void Timer3_ADC();
 void Timer3_OC1();

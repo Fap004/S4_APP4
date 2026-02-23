@@ -29,6 +29,7 @@
 #include "button.h"
 #include "UART_Rx.h"
 #include "UART_Tx.h"
+#include "timers.h"
 
 //Machine à état fini permettant la gestion des modes
 void mef() 
@@ -38,25 +39,29 @@ void mef()
     // ===============================
     if (PORTFbits.RF3)
     {
-        Etat = ETAT_INTERCOM;
+        //Etat = ETAT_INTERCOM;
     }
     switch (Etat)
     {
         case ETAT_ATT:
             T1CONbits.ON = 0;
             OffLed(1);
-            OffLed(0);
+            OnLed(0);
+
             // Lecture boutons seulement en attente
-            if (bouton_appuye(PORTBbits.RB8, &btnR))
+            if (bouton_appuye(PORTBbits.RB8, &btnR)) {
                 Etat = ETAT_EN;
-            else if (bouton_appuye(PORTBbits.RB0, &btnL))
+            } else if (bouton_appuye(PORTBbits.RB0, &btnL)) {
                 Etat = ETAT_LIRE;
-            else if (bouton_appuye(PORTFbits.RF0, &btnC))
+            } else if (bouton_appuye(PORTFbits.RF0, &btnC)) {
                 Etat = ETAT_TEST;
-            else if (bouton_appuye(PORTBbits.RB1, &btnU))
-                Etat = ETAT_LIRE_TX;
-            else if (bouton_appuye(PORTAbits.RA15, &btnD))
+            } else if (bouton_appuye(PORTBbits.RB1, &btnU)) {
+                Etat = ETAT_EN_TX;
+            } else if (bouton_appuye(PORTAbits.RA15, &btnD)) {
                 Etat = ETAT_TEST_TX;
+                OnLed(1);  // ici correctement inclus dans le bloc
+            }
+            break;
             break;
         case ETAT_EN:
             if (enregistrement())
@@ -70,13 +75,19 @@ void mef()
             if (test())
                 Etat = ETAT_ATT;
             break;
-        case ETAT_LIRE_TX:
+        case ETAT_EN_TX:
             if (test())
                 Etat = ETAT_ATT;
             break;
         case ETAT_TEST_TX:
-            if (test())
+            if (!UART4_SendTestBuffer_8MSB_NB(true)) {
+                // toujours en cours, ne rien faire d'autre
+            } else {
+                // tout envoyé
+                test_tx_index = 0;   // reset pour la prochaine fois
                 Etat = ETAT_ATT;
+                OffLed(0);
+            }
             break;
         case ETAT_INTERCOM:
             if (!PORTFbits.RF3)   // Sort seulement si switch OFF

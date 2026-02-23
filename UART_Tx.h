@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include "UART.h"
 
+
 /* Initialise UART4 (BRG/BRGH, PDSEL=9-bit, STSEL=2 stop, PPS RF12/RF13, UTXEN/URXEN). 
    NB: L?ISR RX est définie dans uart_rx.c ; cette init active l?IRQ RX. */
 void UART_Init(void);
@@ -26,5 +27,7 @@ void UART4_SendADC_10bits_in_9bit(const volatile uint16_t *adcBuf,
 
 /* Raccourci : envoie le buffer ADC global (défini dans ADC.c). */
 void UART4_StartTransmitRecorded(bool full10bits, bool withOddParity);
+
+bool UART4_SendTestBuffer_8MSB_NB(bool withOddParity);
 
 #endif /* _UART_TX_H */

@@ -20,10 +20,14 @@
 */
 #include <xc.h>
 #include <sys/attribs.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "config.h"
 
 #include "test.h"
 #include "timers.h"
+#include "UART_Tx.h"
+#include "UART_Rx.h"
 
 //20 scan d'un sinus car 8kHz de freq_ech/signal 400hz =20 echantillons
 volatile uint16_t test_buffer[BUFFER_SIZE_TEST]=

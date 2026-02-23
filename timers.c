@@ -29,6 +29,18 @@
 #include "test.h"
 #include "button.h"
 #include "UART_Rx.h"
+#include "UART_Tx.h"
+
+
+extern volatile uint8_t g_rxActive;
+extern volatile uint8_t g_txActive;
+
+// variables TX sinus 4 s définies dans test.c (extern)
+extern volatile unsigned test_tx_index;
+extern volatile unsigned test_tx_periods;
+extern volatile bool     test_tx_odd;
+extern volatile uint16_t test_buffer[BUFFER_SIZE_TEST];
+
  
 void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1ISR(void) 
 {  
@@ -104,41 +116,45 @@ void Timer3_config()
 
 void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
 {
-    switch(Etat)
+    uint8_t byte;
+
+    /* 1?? PRIORITÉ ABSOLUE : UART RX */
+    if (uart_rx_pop(&byte)) {
+        unsigned short sample10 = ((unsigned short)byte) << 2;
+        OC1RS = sample10;
+    }
+    else
     {
-        case ETAT_LIRE:
-            if (ADC_index < BUFFER_SIZE) {
-                OC1RS = (uint16_t)(audioBuffer[ADC_index++]);
-            }
-            break;
-
-        case ETAT_TEST:
-            if (test_index < BUFFER_SIZE_TEST) {
-                OC1RS = (uint16_t)(test_buffer[test_index++]);
-            } else {
-                test_index = 0;
-                test_cpt++;
-            }
-            break;
-
-        case ETAT_COM:
+        /* 2?? Fallback : logique normale (MEF) */
+        switch (Etat)
         {
-            uint8_t d8;
-            if (UART_RxPop(&d8)) {
-                unsigned short sample10 = ((unsigned short)d8) << 2;
-                OC1RS = sample10;
-            } else {
-                OC1RS = 0;
-            }
-        }
-        break;
+            case ETAT_LIRE:
+                if (ADC_index < BUFFER_SIZE) {
+                    OC1RS = (uint16_t)(audioBuffer[ADC_index++]);
+                } else {
+                    OC1RS = 0;
+                }
+                break;
 
-        default:
-            break;
+            case ETAT_TEST:
+                if (test_index < BUFFER_SIZE_TEST) {
+                    OC1RS = (uint16_t)(test_buffer[test_index++]);
+                } else 
+                {
+                    test_index = 0;     // boucle sur un cycle
+                    test_cpt++;         // avance le compteur total
+                    OC1RS = 0;
+                }
+                break;
+
+            default:
+                OC1RS = 0;
+                break;
+        }
     }
 
-    tick_ms++;            // debouncing
-    IFS0bits.T3IF = 0;    // <-- clear unique du flag ici
+    tick_ms++;
+    IFS0bits.T3IF = 0;
 }
 
 

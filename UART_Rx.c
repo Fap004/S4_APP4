@@ -4,7 +4,6 @@
 #include <stdbool.h>
 #include <sys/attribs.h>
 
-//#include "UART.h"
 #include "UART_Rx.h"
 #include "config.h"
 
@@ -17,33 +16,11 @@ volatile unsigned short uartRxRd = 0;
 volatile uint8_t g_playActive = 0;
 
 /* ---------- Helpers FIFO ---------- */
-static inline unsigned short nxt(unsigned short x){ return (unsigned short)((x+1u)%UART_RX_BUF_SIZE); }
+static inline unsigned short nxt(unsigned short x){ return (unsigned short)((x + 1u) % UART_RX_BUF_SIZE); }
 static inline void push8(uint8_t v){
     unsigned short n = nxt(uartRxWr);
-    if (n == uartRxRd) { uartRxRd = nxt(uartRxRd); } // drop oldest si plein
+    if (n == uartRxRd) { uartRxRd = nxt(uartRxRd); } // drop oldest si plein (politique simple)
     uartRxBuf[uartRxWr] = v; uartRxWr = n;
-}
-
-/* ---------- API pop pour le Timer 8 kHz ---------- */
-int UART_RxPop(uint8_t *out)
-{
-    if (uartRxWr == uartRxRd) return 0;
-    *out = uartRxBuf[uartRxRd];
-    uartRxRd = nxt(uartRxRd);
-    return 1;
-}
-
-/* ---------- Start/Stop lecture live ---------- */
-void Stream_Start(void)
-{
-    __builtin_disable_interrupts();
-    uartRxWr = uartRxRd = 0;
-    __builtin_enable_interrupts();
-    g_playActive = 1;
-}
-void Stream_Stop(void)
-{
-    g_playActive = 0;
 }
 
 /* ---------- (Option) parité impaire logicielle ---------- */
@@ -54,26 +31,45 @@ static inline uint8_t odd_parity8(uint8_t d) {
     return (uint8_t)(~d) & 1u;
 }
 
-/* ---------- ISR UART4 RX (UNE seule pour _UART_4_VECTOR) ---------- */
+int uart_rx_pop(uint8_t *out)
+{
+    if (uartRxWr == uartRxRd) {
+        return 0;   // FIFO vide
+    }
+
+    *out = uartRxBuf[uartRxRd];
+    uartRxRd = nxt(uartRxRd);
+    return 1;       // succès
+}
+
+
 void __ISR(_UART_4_VECTOR, IPL5SOFT) U4RX_ISR(void)
 {
-    // Gérer un overrun (sinon RX se bloque)
-    if (U4STAbits.OERR) { (void)U4RXREG; U4STAbits.OERR = 0; }
+    /* 1) OERR : si overrun, la RX est bloquée tant qu'on ne met pas OERR=0 */
+    if (U4STAbits.OERR) 
+    {
+        U4STAbits.OERR = 0;  /* relance la réception */
+        /* (facultatif) compter l'overrun ici */
+    }
 
-    while (U4STAbits.URXDA) {
-        uint16_t rx = U4RXREG;             // mot 9 bits si PDSEL=0b11
+    /* 2) Vider TOUT le FIFO matériel tant que URXDA = 1 (obligatoire) */
+    while (U4STAbits.URXDA) 
+    {
+        uint16_t rx = U4RXREG;             /* mot 9 bits si PDSEL=0b11 */
         uint8_t  d8 = (uint8_t)(rx & 0xFF);
         uint8_t  msb = (uint8_t)((rx >> 8) & 1u);
 
-        // (Option APP) Vérif parité impaire logicielle, LD5 si erreur
-        // if (msb != odd_parity8(d8)) { /* allumer LD5 */ }
+        /* (Option APP) Vérif parité impaire logicielle : MSB doit = odd_parity8(d8) */
+        // if (msb != odd_parity8(d8)) { /* allumer LD5 / incrémenter un compteur */ }
 
+        /* (Option diag) PERR/FERR : la simple lecture de U4RXREG purge le flag pour l'octet lu */
+        // if (U4STAbits.FERR) { /* compter / filtrer si besoin */ }
+        // if (U4STAbits.PERR) { /* compter / filtrer si besoin */ }
+
+        /* 3) Pousser l'octet utile dans la FIFO logicielle 8-bit */
         push8(d8);
     }
 
-    // (Option diag) if (U4STAbits.FERR) { /* framing error */ }
-    // (Option diag) if (U4STAbits.PERR) { /* parity error HW */ }
-
-    IFS2bits.U4RXIF = 0;  // clear flag
-    // NB : vider tout le FIFO (URXDA) + clear le flag = obligatoire. [1](https://usherbrooke-my.sharepoint.com/personal/paif1582_usherbrooke_ca/Documents/6-Autres/Fichiers%20Microsoft%20Copilot%20Chat/s4-ge_app4_guideetudiant_2026-hiver.pdf)
+    /* 4) Clear du flag d'interruption (après avoir tout vidé) */
+    IFS2bits.U4RXIF = 0;
 }
