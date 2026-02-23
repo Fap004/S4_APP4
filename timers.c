@@ -30,6 +30,7 @@
 #include "button.h"
 #include "UART_Rx.h"
 #include "UART_Tx.h"
+#include "led.h"
 
 
 extern volatile uint8_t g_rxActive;
@@ -116,21 +117,7 @@ void Timer3_config()
 
 void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
 {
-    uint8_t byte;
-
-    /* ========================
-       1?? PRIORITÉ ABSOLUE : UART RX
-       ======================== */
-//    if (uart_rx_pop(&byte)) 
-//    {
-//        unsigned short sample10 = ((unsigned short)byte) << 2; // 8 MSB ? 10 bits
-//        OC1RS = sample10; // sortie audio
-//    }
-//    else
-//    {
-        /* ========================
-           2?? TX TEST BUFFER (si en ETAT_TEST_TX)
-           ======================== */
+                    
         if (Etat == ETAT_TEST_TX)
         {
             if (test_index<BUFFER_SIZE_TEST)
@@ -143,6 +130,12 @@ void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
                 test_index=0;
                 test_cpt++;
             }
+        }
+    uint8_t byte;
+    if (uart_rx_pop(&byte))
+        {
+            uint16_t sample10 = ((uint16_t)byte) << 2;
+            OC1RS = sample10;
         }
         else
         {
@@ -176,13 +169,11 @@ void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
                     break;
             }
         }
-    //}
 
     tick_ms++;             // debouncing ou gestion du temps
     IFS0bits.T3IF = 0;     // clear du flag Timer3
+
 }
-
-
 
 void Timer3_stop(){
     T3CONbits.ON = 0;

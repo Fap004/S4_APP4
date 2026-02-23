@@ -36,15 +36,14 @@ void UART_Init(void)
     TRISFbits.TRISF13 = 1;
 
     // PPS (codes à confirmer dans la datasheet device)
-    U4RXRbits.U4RXR   = 0b0100;  // RF13 -> U4RX  (vérifier code exact pour PIC32MX370)
-    RPF12Rbits.RPF12R = 0b0010;  // U4TX -> RF12  (vérifier code exact pour PIC32MX370)
+    U4RXRbits.U4RXR   = 0b1001;  // RF13 -> U4RX  (vérifier code exact pour PIC32MX370)0b1001
+    RPF12Rbits.RPF12R = 0b0010;  // U4TX -> RF12  (vérifier code exact pour PIC32MX370)0b0010;
     // Entre 2 cartes : TX<->RX croisés + GND commun.
 
-    // Baud ~115200 @ PBCLK 48 MHz (BRGH=0 => ÷16)
+    // Baud ~115200 @ PBCLK 48 MHz
     U4MODEbits.BRGH = 0;        // 0
-    U4BRG = 25;         // 21 (~115200 bps typique)
+    U4BRG = 25;         // 25 (115200 bps typique)
 
-    // Trame : 9 bits (sans parité matérielle), 2 stop (conforme à l?APP)
     U4MODEbits.PDSEL = 0b00; // 0b11
     U4MODEbits.STSEL = 1;        // 1
 
@@ -138,6 +137,7 @@ bool UART4_SendTestBuffer_8MSB_NB(bool withOddParity)
     test_tx_index++;           // passer au prochain octet
     return false;              // toujours en cours
 }
+
 void UART4_SendTestBufferBlocking(void)
 {
     int i;
@@ -163,8 +163,6 @@ void UART4_SendSample(void)
     if (!U4STAbits.UTXBF) 
     {
         U4TXREG = (uint8_t)(test_buffer[test_index] >> 2);
-        //U4TXREG='a';
-        //idx = (idx + 1) % 20;
     }
 }
 

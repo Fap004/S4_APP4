@@ -27,6 +27,7 @@
 #include "button.h"
 #include "speaker.h"
 #include "UART_Tx.h"
+#include "timers.h"
 
 //Initialisation du système
 void sys_init(void)
@@ -39,6 +40,9 @@ void sys_init(void)
     Timer3_config();
     UART_Init();
     switch_init();
+    Timer1_config;
+    Timer2_config;
+    Timer3_config;
     macro_enable_interrupts();
     
     //Initialisation pour l'analog discovery

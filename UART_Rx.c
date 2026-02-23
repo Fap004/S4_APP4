@@ -28,27 +28,17 @@ static inline void push8(uint8_t v)
     uartRxWr = n;
 }
 
-/* ---------- (Option) parité impaire logicielle ---------- */
-static inline uint8_t odd_parity8(uint8_t d) {
-    d ^= (uint8_t)(d >> 4);
-    d ^= (uint8_t)(d >> 2);
-    d ^= (uint8_t)(d >> 1);
-    return (uint8_t)(~d) & 1u;
-}
-
-int uart_rx_pop(uint8_t *out)
+bool uart_rx_pop(uint8_t *v)
 {
-    if (uartRxWr == uartRxRd) {
-        return 0;   // FIFO vide
-    }
+    if (uartRxRd == uartRxWr)
+        return false;   // buffer vide
 
-    *out = uartRxBuf[uartRxRd];
+    *v = uartRxBuf[uartRxRd];
     uartRxRd = nxt(uartRxRd);
-    return 1;       // succès
+    return true;
 }
 
-
-void __ISR(_UART_4_VECTOR, IPL2AUTO) U4RX_ISR(void)
+void __ISR(_UART_4_VECTOR, IPL5AUTO) U4RX_ISR(void)
 {
     /* 1) OERR : si overrun, la RX est bloquée tant qu'on ne met pas OERR=0 */
     if (U4STAbits.OERR) 
