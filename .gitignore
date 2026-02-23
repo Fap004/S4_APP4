@@ -2,6 +2,33 @@
 build/
 dist/
 .generated_files/
+ 
+# MPLAB user-specific files
+nbproject/private/
+ 
+# MPLAB generated makefiles
+#nbproject/Makefile-*.mk
+nbproject/Package-*.bash
+nbproject/configurations.xml
+ 
+# Compiled outputs
+*.o
+*.elf
+*.hex
+*.map
+*.lst
+*.d
+*.log
+ 
+# OS / IDE
+.DS_Store
+Thumbs.db
+
+##
+# MPLAB X generated files
+build/
+dist/
+.generated_files/
 
 # MPLAB user-specific files
 nbproject/private/
