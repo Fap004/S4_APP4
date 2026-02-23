@@ -17,10 +17,15 @@ volatile uint8_t g_playActive = 0;
 
 /* ---------- Helpers FIFO ---------- */
 static inline unsigned short nxt(unsigned short x){ return (unsigned short)((x + 1u) % UART_RX_BUF_SIZE); }
-static inline void push8(uint8_t v){
+static inline void push8(uint8_t v)
+{
     unsigned short n = nxt(uartRxWr);
-    if (n == uartRxRd) { uartRxRd = nxt(uartRxRd); } // drop oldest si plein (politique simple)
-    uartRxBuf[uartRxWr] = v; uartRxWr = n;
+    if (n == uartRxRd)
+    {
+        uartRxRd = nxt(uartRxRd);
+    } // drop oldest si plein (politique simple)
+    uartRxBuf[uartRxWr] = v;
+    uartRxWr = n;
 }
 
 /* ---------- (Option) parité impaire logicielle ---------- */
@@ -43,7 +48,7 @@ int uart_rx_pop(uint8_t *out)
 }
 
 
-void __ISR(_UART_4_VECTOR, IPL5SOFT) U4RX_ISR(void)
+void __ISR(_UART_4_VECTOR, IPL2AUTO) U4RX_ISR(void)
 {
     /* 1) OERR : si overrun, la RX est bloquée tant qu'on ne met pas OERR=0 */
     if (U4STAbits.OERR) 
@@ -59,14 +64,6 @@ void __ISR(_UART_4_VECTOR, IPL5SOFT) U4RX_ISR(void)
         uint8_t  d8 = (uint8_t)(rx & 0xFF);
         uint8_t  msb = (uint8_t)((rx >> 8) & 1u);
 
-        /* (Option APP) Vérif parité impaire logicielle : MSB doit = odd_parity8(d8) */
-        // if (msb != odd_parity8(d8)) { /* allumer LD5 / incrémenter un compteur */ }
-
-        /* (Option diag) PERR/FERR : la simple lecture de U4RXREG purge le flag pour l'octet lu */
-        // if (U4STAbits.FERR) { /* compter / filtrer si besoin */ }
-        // if (U4STAbits.PERR) { /* compter / filtrer si besoin */ }
-
-        /* 3) Pousser l'octet utile dans la FIFO logicielle 8-bit */
         push8(d8);
     }
 

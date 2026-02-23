@@ -40,13 +40,13 @@ void UART_Init(void)
     RPF12Rbits.RPF12R = 0b0010;  // U4TX -> RF12  (vérifier code exact pour PIC32MX370)
     // Entre 2 cartes : TX<->RX croisés + GND commun.
 
-    // Baud ~115200 @ PBCLK ~40 MHz ou 48 MHz (BRGH=0 => ÷16)
-    U4MODEbits.BRGH = UART_BRGH;        // 0
-    U4BRG = UART_U4BRG_DEFAULT;         // 21 (~115200 bps typique)
+    // Baud ~115200 @ PBCLK 48 MHz (BRGH=0 => ÷16)
+    U4MODEbits.BRGH = 0;        // 0
+    U4BRG = 25;         // 21 (~115200 bps typique)
 
     // Trame : 9 bits (sans parité matérielle), 2 stop (conforme à l?APP)
-    U4MODEbits.PDSEL = UART_PDSEL_9BIT_NOHWPAR; // 0b11
-    U4MODEbits.STSEL = UART_STSEL_2STOP;        // 1
+    U4MODEbits.PDSEL = 0b00; // 0b11
+    U4MODEbits.STSEL = 1;        // 1
 
     // Activer TX/RX AVANT ON (ordre recommandé par le FRM)
     U4STAbits.UTXEN = 1;
@@ -120,18 +120,51 @@ void UART4_StartTransmitRecorded(bool full10bits, bool withOddParity)
 // Renvoie true si tout le buffer a été transmis, false sinon
 bool UART4_SendTestBuffer_8MSB_NB(bool withOddParity)
 {
-    if (test_tx_index >= BUFFER_SIZE_TEST) {
+    if (test_tx_index >= BUFFER_SIZE_TEST)
+    {
         test_tx_index = 0;      // reset pour la prochaine fois
         return true;            // tout envoyé
     }
 
     uint8_t d8 = (uint8_t)(test_buffer[test_tx_index] >> 2);  // 8 MSB
     if (withOddParity)
+    {
         UART4_PutByteOddParity(d8);
+    }
     else
+    {
         UART4_PutByte(d8);
-
+    }
     test_tx_index++;           // passer au prochain octet
     return false;              // toujours en cours
+}
+void UART4_SendTestBufferBlocking(void)
+{
+    int i;
+    for (i = 0; i < BUFFER_SIZE_TEST; i++) 
+    {
+        uint8_t d8 = (uint8_t)(test_buffer[i] >> 2);  // 8 MSB
+
+        // attendre que le FIFO TX ait de la place
+        while (U4STAbits.UTXBF);
+
+        // envoyer le byte (sans parité)
+        U4TXREG = d8;
+
+        // pour simuler 8kHz, délai ~125 µs
+        unsigned int tStart = _CP0_GET_COUNT();
+        while ((_CP0_GET_COUNT() - tStart) < 300000);  // ajuster selon PBCLK
+    }
+}
+
+//volatile uint8_t idx = 0;
+void UART4_SendSample(void)
+{
+    if (!U4STAbits.UTXBF) 
+    {
+        U4TXREG = (uint8_t)(test_buffer[test_index] >> 2);
+        //U4TXREG='a';
+        //idx = (idx + 1) % 20;
+    }
 }
 

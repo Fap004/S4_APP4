@@ -36,7 +36,7 @@ volatile uint16_t test_buffer[BUFFER_SIZE_TEST]=
     1023, 997, 925, 812, 669,
     511, 353, 210, 97, 25,
     0, 25, 97, 210, 353
-};;
+};
 volatile uint16_t test_index = 0;   //permet de naviguer dans les échantillons
 volatile uint16_t test_cpt=0;       //compteur pour le nombre de fois que le signal fais le tour de l'index
 
@@ -60,8 +60,38 @@ int test(void)
     if (test_cpt >= NB_PERIODE_TEST)
     {
         started = 0;
-        OC_stop();
-        Timer2_stop();
+        //OC_stop();
+        //Timer2_stop();
+        //Timer3_stop();
+        OC1RS = 0;      //sortie sonore à 0
+        return 1;       // terminé
+    }
+    
+    return 0;           // en cours
+}
+
+int test_tx(void)
+{
+    static int started = 0; //variable permettant de connaitre si le circuit est actif ou inactif
+    
+    //configure les timers, le Oc et initi les valeurs à 0 pour recommencer a neuf
+    if (!started)
+    {
+        Timer2_config();
+        Timer3_config();
+        OC_config();
+        
+        started = 1;
+        test_index = 0;
+        test_cpt = 0;
+    }
+    
+    //remet à l'etat initial les timers ainsi que le OC pour être prêt a recevoir une nouvelle commande par la suite
+    if (test_cpt >= NB_PERIODE_TEST)
+    {
+        started = 0;
+        //OC_stop();
+        //Timer2_stop();
         //Timer3_stop();
         OC1RS = 0;      //sortie sonore à 0
         return 1;       // terminé

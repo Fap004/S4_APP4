@@ -118,44 +118,70 @@ void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
 {
     uint8_t byte;
 
-    /* 1?? PRIORITÉ ABSOLUE : UART RX */
-    if (uart_rx_pop(&byte)) {
-        unsigned short sample10 = ((unsigned short)byte) << 2;
-        OC1RS = sample10;
-    }
-    else
-    {
-        /* 2?? Fallback : logique normale (MEF) */
-        switch (Etat)
+    /* ========================
+       1?? PRIORITÉ ABSOLUE : UART RX
+       ======================== */
+//    if (uart_rx_pop(&byte)) 
+//    {
+//        unsigned short sample10 = ((unsigned short)byte) << 2; // 8 MSB ? 10 bits
+//        OC1RS = sample10; // sortie audio
+//    }
+//    else
+//    {
+        /* ========================
+           2?? TX TEST BUFFER (si en ETAT_TEST_TX)
+           ======================== */
+        if (Etat == ETAT_TEST_TX)
         {
-            case ETAT_LIRE:
-                if (ADC_index < BUFFER_SIZE) {
-                    OC1RS = (uint16_t)(audioBuffer[ADC_index++]);
-                } else {
-                    OC1RS = 0;
-                }
-                break;
-
-            case ETAT_TEST:
-                if (test_index < BUFFER_SIZE_TEST) {
-                    OC1RS = (uint16_t)(test_buffer[test_index++]);
-                } else 
-                {
-                    test_index = 0;     // boucle sur un cycle
-                    test_cpt++;         // avance le compteur total
-                    OC1RS = 0;
-                }
-                break;
-
-            default:
-                OC1RS = 0;
-                break;
+            if (test_index<BUFFER_SIZE_TEST)
+            {
+                UART4_SendSample();
+                test_index++;
+            }
+            else
+            {
+                test_index=0;
+                test_cpt++;
+            }
         }
-    }
+        else
+        {
+            /* ========================
+               3?? LOGIQUE NORMALE pour lecture ADC ou TEST
+               ======================== */
+            switch (Etat)
+            {
+                case ETAT_LIRE:
+                    if (ADC_index < BUFFER_SIZE) {
+                        OC1RS = (uint16_t)(audioBuffer[ADC_index++]);
+                    } else {
+                        OC1RS = 0;
+                    }
+                    break;
 
-    tick_ms++;
-    IFS0bits.T3IF = 0;
+                case ETAT_TEST:
+                    if (test_index < BUFFER_SIZE_TEST) {
+                        OC1RS = (uint16_t)(test_buffer[test_index++]);
+                    } 
+                    else
+                    {
+                        test_index = 0;   // boucle sur un cycle
+                        test_cpt++;       // compteur total
+                        OC1RS = 0;
+                    }
+                    break;
+
+                default:
+                    OC1RS = 0;
+                    break;
+            }
+        }
+    //}
+
+    tick_ms++;             // debouncing ou gestion du temps
+    IFS0bits.T3IF = 0;     // clear du flag Timer3
 }
+
 
 
 void Timer3_stop(){
