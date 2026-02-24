@@ -1,17 +1,7 @@
 #include <xc.h>
 
 .text
-.globl  adc10_a_8
-.set    noreorder
-.ent    adc10_a_8
-
-adc10_a_8:
-    srl     v0, a0, 2       # v0 = x >> 2
-    jr      ra
-    nop
-
-.end adc10_a_8
-    
+.set    noreorder    
 #------------------------------------  
 .globl scindillerMSB
 .ent scindillerMSB

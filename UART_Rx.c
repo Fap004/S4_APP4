@@ -7,6 +7,7 @@
 #include "UART_Rx.h"
 #include "config.h"
 
+extern  void VerifierParite_S(unsigned int data);
 /* ---------- FIFO 8 bits ---------- */
 //#define UART_RX_BUF_SIZE 128
 volatile uint8_t uartRxBuf[UART_RX_BUF_SIZE];
@@ -63,10 +64,14 @@ bool uart_rx_pop10(uint16_t *v)
 void __ISR(_UART_4_VECTOR, IPL5AUTO) U4RX_ISR(void)
 {
     // Clear overrun si nécessaire
-    if (U4STAbits.OERR) U4STAbits.OERR = 0;
-
+    if (U4STAbits.OERR)
+    {
+        U4STAbits.OERR = 0;
+    }
+    
     while (U4STAbits.URXDA)
     {
+        VerifierParite_S(U4RXREG);
         uint8_t d8 = (uint8_t)(U4RXREG & 0xFF);
 
         if (!PORTBbits.RB9)
