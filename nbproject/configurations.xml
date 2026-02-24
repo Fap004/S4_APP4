@@ -47,6 +47,7 @@
       <itemPath>UART_Tx.c</itemPath>
       <itemPath>UART_Rx.c</itemPath>
       <itemPath>parite_S.S</itemPath>
+      <itemPath>modif_trame_S.S</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"

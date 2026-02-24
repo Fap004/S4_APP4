@@ -34,7 +34,3 @@ scindillerLSB:
     nop
 
 .end scindillerLSB
-
-    
-
-.end scindiller
