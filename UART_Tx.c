@@ -11,6 +11,10 @@
 #include "test.h"
 
 volatile size_t test_tx_index = 0;   // indice courant dans test_buffer
+extern  int scindillerMSB(unsigned int data);
+extern  int scindillerLSB(unsigned int data);
+ 
+
 
 /* ---------- Parité impaire logicielle (sur 8 bits) ---------- */
 static inline uint8_t odd_parity8(uint8_t d) 
@@ -60,9 +64,13 @@ void UART_Init(void)
 //volatile uint8_t idx = 0;
 void UART4_SendSample(void)
 {
-    if (!U4STAbits.UTXBF) 
+    if (PORTBbits.RB9 == 0)
     {
-        U4TXREG = (uint8_t)(test_buffer[test_index] >> 2);
+        if (!U4STAbits.UTXBF) 
+        {
+            U4TXREG = (uint8_t)(test_buffer[test_index] >> 2);
+        }
+
     }
 }
 

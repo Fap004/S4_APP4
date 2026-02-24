@@ -18,7 +18,6 @@ adc10_a_8:
     
 scindillerMSB:
     srl     v0, a0, 2  # paquet 1
-    andi    v1, a0, 0x0003 # paquet 2 
     
     jr      ra
     nop
@@ -29,7 +28,8 @@ scindillerMSB:
 .ent scindillerLSB
 
 scindillerLSB:
-    andi    v1, a0, 0x0003 # paquet 2
+    andi    v0, a0, 0x0003 # paquet 2
+    
     jr      ra
     nop
 
