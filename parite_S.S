@@ -46,11 +46,11 @@ fin:
 
 VerifierParite_S:
 
-    la      t4, LATACLR  // nouvelle adresse LATACLR
+    la      t4, LATACLR  // adresse du registre LATACLR
 
-    li      t5, 0b00100000 // masque DEL LD5    
+    li      t5, 0b00100000 // on s'assure que bit5 est eteint   
 
-    sw      t5, 0(t4) // masque dans LATACLR -> DEL LD5 à 0
+    sw      t5, 0(t4) // masque dans LATACLR 
  
     move    t0, a0 // t0 = a0   
 
@@ -60,29 +60,29 @@ VerifierParite_S:
  
 boucle_verif:
 
-    andi    t3, t0, 1 // t3 (temporaire) = t0 et 1 -> isole bit de droite
+    andi    t3, t0, 1 // isole bit de droite
 
-    addu    t1, t1, t3 // t1 = t1 + t3 (unsigned)
+    addu    t1, t1, t3 //
 
     srl     t0, t0, 1 // t0 décalé de 1 vers la droite
 
-    addiu   t2, t2, -1 // t2 = t2 - 1 -> décrémente le compteur (9 vers 0)
+    addiu   t2, t2, -1 // décrémente le compteur (9)
 
-    bne     t2, zero, boucle_verif // si compteur != 0 -> recommence boucle 
+    bne     t2, zero, boucle_verif // boucle sur t2 jusqua t2=0
 
     nop
  
-    andi    t1, t1, 1 // si t1=0: somme paire. si t1=1: somme impaire
+    andi    t1, t1, 1 // si t1=0 (paire) si t1=1 (impaire)
 
     bne     t1, zero, fin_verif // si t1 = 1 -> fin vérification
 
     nop
  
-    la      t4, LATASET // nouvelle adresse LATASET
+    la      t4, LATASET //  adresse LATASET
 
-    li      t5, 0b00100000 // masque DEL LD5 
+    li      t5, 0b00100000 // mask pour allumer bit5   
 
-    sw      t5, 0(t4) // masque dans LATASET -> DEL LD5 à 1
+    sw      t5, 0(t4) // masque dans LATASET 
  
 fin_verif:
 
