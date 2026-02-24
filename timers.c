@@ -32,7 +32,6 @@
 #include "UART_Tx.h"
 #include "led.h"
 
-
 extern volatile uint8_t g_rxActive;
 extern volatile uint8_t g_txActive;
 
@@ -42,7 +41,6 @@ extern volatile unsigned test_tx_periods;
 extern volatile bool     test_tx_odd;
 extern volatile uint16_t test_buffer[BUFFER_SIZE_TEST];
 
- 
 void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1ISR(void) 
 {  
 // Code de l'ISR ici
@@ -88,7 +86,6 @@ void Timer2_config()
     T2CONbits.ON = 1;           // On met le timer ? ON
 }
 
-
 void Timer2_stop()
 {
     T2CONbits.ON = 0;
@@ -114,80 +111,84 @@ void Timer3_config()
     T3CONbits.ON = 1;           // On met le timer à ON
 }
 
-
 void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
 {
-                    
-        if (Etat == ETAT_TEST_TX)
+    uint16_t sample = 0;  // valeur par défaut pour OC1RS
+
+    // Gestion des transmissions actives
+    if (Etat == ETAT_TEST_TX)
+    {
+        if (test_index < BUFFER_SIZE_TEST)
         {
-            if (test_index<BUFFER_SIZE_TEST)
-            {
-                UART4_SendSample();
-                test_index++;
-            }
-            else
-            {
-                test_index=0;
-                test_cpt++;
-            }
-        }
-        if (Etat == ETAT_EN_TX)
-        {
-            if (ADC_index < BUFFER_SIZE) 
-            {
-                UART4_SendRecording();
-                ADC_index++;
-            } 
-            else
-            {
-                ADC_index=0;
-                //OC1RS = 0;
-            }
-        }
-        
-    uint8_t byte;
-    if (uart_rx_pop(&byte))
-        {
-            uint16_t sample10 = ((uint16_t)byte) << 2;
-            OC1RS = sample10;
+            UART4_SendSample();
+            test_index++;
         }
         else
         {
-            /* ========================
-               3?? LOGIQUE NORMALE pour lecture ADC ou TEST
-               ======================== */
-            switch (Etat)
-            {
-                case ETAT_LIRE:
-                    if (ADC_index < BUFFER_SIZE) {
-                        OC1RS = (uint16_t)(audioBuffer[ADC_index++]);
-                    } else {
-                        OC1RS = 0;
-                    }
-                    break;
-
-                case ETAT_TEST:
-                    if (test_index < BUFFER_SIZE_TEST) 
-                    {
-                        OC1RS = (uint16_t)(test_buffer[test_index++]);
-                    } 
-                    else
-                    {
-                        test_index = 0;   // boucle sur un cycle
-                        test_cpt++;       // compteur total
-                        OC1RS = 0;
-                    }
-                    break;
-
-                default:
-                    OC1RS = 0;
-                    break;
-            }
+            test_index = 0;
+            test_cpt++;
         }
+    }
+    else if (Etat == ETAT_EN_TX)
+    {
+        if (ADC_index < BUFFER_SIZE)
+        {
+            UART4_SendRecording();
+            ADC_index++;
+        }
+        else
+        {
+            ADC_index = 0;
+            // sample = 0;  // OC1RS = 0 si rien à jouer
+        }
+    }
 
-    tick_ms++;             // debouncing ou gestion du temps
-    IFS0bits.T3IF = 0;     // clear du flag Timer3
+    // Lecture des données UART pour jeu en direct
+    if (PORTBbits.RB9 == 0)  // mode 8 bits
+    {
+        uint8_t byte8;
+        if (uart_rx_pop(&byte8))
+        {
+            sample = ((uint16_t)byte8 << 2);  // converti en 10 bits
+        }
+    }
+    else  // mode 10 bits
+    {
+        uart_rx_pop10(&sample);  // retourne 0 si FIFO vide
+    }
 
+    // Si pas de donnée UART, on joue selon l'état normal
+    if (sample == 0)
+    {
+        switch (Etat)
+        {
+            case ETAT_LIRE:
+                if (ADC_index < BUFFER_SIZE)
+                    sample = (uint16_t)audioBuffer[ADC_index++];
+                else
+                    sample = 0;
+                break;
+
+            case ETAT_TEST:
+                if (test_index < BUFFER_SIZE_TEST)
+                    sample = (uint16_t)test_buffer[test_index++];
+                else
+                {
+                    test_index = 0;
+                    test_cpt++;
+                    sample = 0;
+                }
+                break;
+
+            default:
+                sample = 0;
+                break;
+        }
+    }
+
+    OC1RS = sample;     // applique la valeur finale
+    tick_ms++;          // incrémentation du compteur temps
+    IFS0bits.T3IF = 0;  // clear du flag Timer3
 }
 
 void Timer3_stop(){

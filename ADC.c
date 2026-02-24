@@ -68,7 +68,7 @@ void __ISR(_ADC_VECTOR, IPL7AUTO) ADC_ISR(void)
     if (Etat == ETAT_INTERCOM)
     {
         UART4_SendIntercom();
-        OnLed(5);
+        //OnLed(5);
     }
     else
     {
@@ -94,7 +94,8 @@ void __ISR(_ADC_VECTOR, IPL7AUTO) ADC_ISR(void)
 }
 
 //Arret de l'ADC
-void ADC_Stop(){
+void ADC_Stop()
+{
     AD1CON1bits.ON = 0;
     IEC0bits.AD1IE = 0;
     IFS0bits.AD1IF = 0;
