@@ -7,9 +7,6 @@
 
 ajout_parite_odd:
 
-    addi    sp, sp, -4  // réserver 4 octets sur la pile
-    sw      ra, 0(sp)   // sauvegarde de l'adresse(ra)
-
     move    t0, a0      // copie donnée a0(8bits) dans t0
     move    t1, zero    // accumulateur XOR mis a 0
     li      t2, 8       // compteur pour 8 bits
@@ -22,10 +19,10 @@ boucle_xor:
     bnez    t2, boucle_xor  // boucle sur t2 jusqua t2=0
     nop   // securité
 
-    beq     t1, zero, set_bit  // t1 = 0 (pair) ou 1 (impair)
+    beq     t1, zero, set_bit  // t1 = 0 (pair) bit 9 = 1 (on va a set bit)
     nop
 
-    move    v0, a0  // impair ? bit 9 = 0
+    move    v0, a0  // t1=1 (impair)  bit 9 = 0
     j       fin
     nop
 
@@ -33,8 +30,7 @@ set_bit:
     ori     v0, a0, 0x100   // pair ? bit 9 = 1
 
 fin:
-    lw      ra, 0(sp)  
-    addi    sp, sp, 4  // on libere les 4 octets
+    
     jr      ra         // retour dans .c
     nop                // delay slot
 
