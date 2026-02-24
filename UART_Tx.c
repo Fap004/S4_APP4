@@ -64,13 +64,18 @@ void UART_Init(void)
 //volatile uint8_t idx = 0;
 void UART4_SendSample(void)
 {
-    if (PORTBbits.RB9 == 0)
+    if (!U4STAbits.UTXBF)
     {
-        if (!U4STAbits.UTXBF) 
+        if (PORTBbits.RB9 == 0) 
         {
             U4TXREG = (uint8_t)(test_buffer[test_index] >> 2);
         }
-
+    
+        else
+        {
+            U4TXREG=scindillerMSB(test_buffer[test_index]);
+            U4TXREG=scindillerLSB(test_buffer[test_index]);
+        }
     }
 }
 
@@ -78,7 +83,15 @@ void UART4_SendRecording(void)
 {
     if (!U4STAbits.UTXBF) 
     {
-        U4TXREG = (uint8_t)(audioBuffer[ADC_index] >> 2);
+        if (PORTBbits.RB9 == 0)
+        {
+            U4TXREG = (uint8_t)(audioBuffer[ADC_index] >> 2);
+        }
+        else
+        {
+            U4TXREG=scindillerMSB(audioBuffer[ADC_index]);
+            U4TXREG=scindillerLSB(audioBuffer[ADC_index]);
+        }
     }
 }
 
@@ -86,7 +99,15 @@ void UART4_SendIntercom(void)
 {
     if (!U4STAbits.UTXBF) 
     {
-        U4TXREG = (uint8_t)(ADC1BUF0 >> 2);
+        if (PORTBbits.RB9 == 0)
+        {
+            U4TXREG = (uint8_t)(ADC1BUF0 >> 2);
+        }
+        else
+        {
+            U4TXREG=scindillerMSB(ADC1BUF0);
+            U4TXREG=scindillerLSB(ADC1BUF0);
+        }
     }
 }
 
