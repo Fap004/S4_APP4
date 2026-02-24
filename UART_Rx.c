@@ -8,24 +8,23 @@
 #include "config.h"
 
 extern  void VerifierParite_S(unsigned int data);
-/* ---------- FIFO 8 bits ---------- */
-//#define UART_RX_BUF_SIZE 128
+
+//FIFO 8 bits
 volatile uint8_t uartRxBuf[UART_RX_BUF_SIZE];
-volatile unsigned short uartRxWr = 0;
-volatile unsigned short uartRxRd = 0;
+volatile unsigned short uartRxWr = 0;//Rx write
+volatile unsigned short uartRxRd = 0;//RX read
 
-/* ---------- FIFO 10 bits ---------- */
-//#define UART_RX_BUF10_SIZE 128
+//FIFO 10 bits
 volatile uint16_t uartRxBuf10[UART_RX_BUF10_SIZE];
-volatile unsigned short uartRxWr10 = 0;
-volatile unsigned short uartRxRd10 = 0;
+volatile unsigned short uartRxWr10 = 0;//RX write
+volatile unsigned short uartRxRd10 = 0;//Rx read
 
-/* ---------- Flags et variables internes ---------- */
-static uint8_t rx_msb8    = 0;   // stocke le MSB du mot 10 bits
-static uint8_t rx_wait_lsb = 0;  // 0 = attend MSB, 1 = attend LSB
+//Helpers FIFO (facilite lutilisation)
+static inline unsigned short nxt8(unsigned short x)
+{
+    return (x + 1) % UART_RX_BUF_SIZE; 
+}
 
-/* ---------- Helpers FIFO ---------- */
-static inline unsigned short nxt8(unsigned short x){ return (x + 1) % UART_RX_BUF_SIZE; }
 static inline void push8(uint8_t v)
 {
     unsigned short n = nxt8(uartRxWr);
@@ -42,7 +41,7 @@ bool uart_rx_pop(uint8_t *v)
     return true;
 }
 
-/* ---------- FIFO 10 bits ---------- */
+ //FIFO 10 bits
 static inline unsigned short nxt10(unsigned short x){ return (x + 1) % UART_RX_BUF10_SIZE; }
 static inline void push10(uint16_t v)
 {
@@ -60,45 +59,36 @@ bool uart_rx_pop10(uint16_t *v)
     return true;
 }
 
-/* ---------- ISR UART4 ---------- */
+//ISR UART
 void __ISR(_UART_4_VECTOR, IPL5AUTO) U4RX_ISR(void)
 {
-    // 1) Débloquer si overrun
-    if (U4STAbits.OERR) {
-        U4STAbits.OERR = 0;
-    }
+    static uint8_t rx_msb8    = 0;//variable MSB
+    static uint8_t rx_wait_lsb = 0;//variable LSB
 
-    // 2) Variables statiques pour reconstituer les 10 bits
-    static uint8_t rx_msb8    = 0;
-    static uint8_t rx_wait_lsb = 0;
-
-    // 3) Lire tout le FIFO matériel
+    //Lire tout le FIFO matériel
     while (U4STAbits.URXDA)
     {
-        // *** LIRE UNE SEULE FOIS ***
-        uint16_t rx = U4RXREG;            // PDSEL=0b11 -> 9 bits utiles : [parité_logicielle | data8]
+        uint16_t rx = U4RXREG;//stock le message 8 bits messages et 1 parité
 
-        // Vérification de parité logicielle via TA fonction (void, allume LED si erreur)
-        // IMPORTANT : ne PAS relire U4RXREG ici !
-        VerifierParite_S(rx);
+        VerifierParite_S(rx);//allume une del si un erreur detecter
 
-        // Extraire l?octet utile
-        uint8_t data8 = (uint8_t)(rx & 0xFF);
+        uint8_t data8 = (uint8_t)(rx & 0xFF);//enlever le bit de parité pour le reste
 
         if (!PORTBbits.RB9)
         {
-            // ===== MODE 8 BITS =====
+            //MODE 8 BITS
             push8(data8);
         }
         else
         {
-            // ===== MODE 10 BITS =====
-            if (!rx_wait_lsb) {
-                // 1er mot = 8 MSB
+            //MODE 10 BITS
+            if (!rx_wait_lsb)
+            {
                 rx_msb8     = data8;
                 rx_wait_lsb = 1;
-            } else {
-                // 2e mot = 2 LSB dans data8[1:0]
+            } else
+            {
+                // 2messages 2 LSB
                 uint8_t  lsb2     = (uint8_t)(data8 & 0x03);
                 uint16_t sample10 = ((uint16_t)rx_msb8 << 2) | lsb2;
                 push10(sample10);
@@ -106,7 +96,6 @@ void __ISR(_UART_4_VECTOR, IPL5AUTO) U4RX_ISR(void)
             }
         }
     }
-
-    // 4) Clear flag d?interruption
+    //Clear flag
     IFS2bits.U4RXIF = 0;
 }

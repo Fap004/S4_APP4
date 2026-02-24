@@ -6,11 +6,9 @@
 #include <stdbool.h>
 #include "UART.h"
 
-extern volatile uint8_t tx_subindex;   // 0 = MSB, 1 = LSB
+extern volatile uint8_t tx_index;   // 0 = MSB, 1 = LSB
 
 void UART_Init(void);
-
-static inline uint8_t odd_parity8(uint8_t d);
 
 void UART4_SendSample(void);
 

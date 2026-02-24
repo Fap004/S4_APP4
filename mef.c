@@ -81,7 +81,6 @@ void mef()
             else if (bouton_appuye(PORTAbits.RA15, &btnD)) 
             {
                 Etat = ETAT_TEST_TX;    //Envoie du signal test
-                test_tx_index = 0;      // préparer le buffer pour le Timer ISR
                 OnLed(4);
             }
             break;

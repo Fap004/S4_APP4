@@ -130,11 +130,11 @@ void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
                 {
                     if (sent == 0)
                     {
-                        tx_subindex = 0;  // 8 MSB, premier message
+                        tx_index = 0;  // 8 MSB, premier message
                     }
                     else
                     {
-                        tx_subindex = 1;  //  2 LSB, deuxieme message
+                        tx_index = 1;  //  2 LSB, deuxieme message
                     }
                     UART4_SendSample();
                     sent++;
@@ -168,11 +168,11 @@ void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
                 {
                     if (sent == 0)
                     {
-                        tx_subindex = 0; //MSB message 1
+                        tx_index = 0; //MSB message 1
                     }
                     else
                     {
-                        tx_subindex = 1; //LSB message 2
+                        tx_index = 1; //LSB message 2
                     }
 
                     UART4_SendRecording();
