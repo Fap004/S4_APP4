@@ -22,10 +22,10 @@ volatile unsigned short uartRxRd10 = 0;//Rx read
 //Helpers FIFO (facilite lutilisation)
 static inline unsigned short nxt8(unsigned short x)
 {
-    return (x + 1) % UART_RX_BUF_SIZE; 
+    return (x + 1) % UART_RX_BUF_SIZE;  // ca fait un wrap around avec un modulo du buffer. quand ca atteint le bout ca revient au debut
 }
 
-static inline void push8(uint8_t v)
+static inline void push8(uint8_t v)     // fonction qui permet de faire mon buffer circulaire 8BITS
 {
     unsigned short n = nxt8(uartRxWr);
     if (n == uartRxRd) uartRxRd = nxt8(uartRxRd); // overwrite oldest
@@ -33,7 +33,7 @@ static inline void push8(uint8_t v)
     uartRxWr = n;
 }
 
-bool uart_rx_pop(uint8_t *v)
+bool uart_rx_pop(uint8_t *v)        // FIFO qui me permet dacceder a mon buffer 8BITS
 {
     if (uartRxRd == uartRxWr) return false; // buffer vide
     *v = uartRxBuf[uartRxRd];
@@ -42,8 +42,12 @@ bool uart_rx_pop(uint8_t *v)
 }
 
  //FIFO 10 bits
-static inline unsigned short nxt10(unsigned short x){ return (x + 1) % UART_RX_BUF10_SIZE; }
-static inline void push10(uint16_t v)
+static inline unsigned short nxt10(unsigned short x)    // ca fait un wrap around avec un modulo du buffer. quand ca atteint le bout ca revient au debut
+{
+    return (x + 1) % UART_RX_BUF10_SIZE;
+}
+
+static inline void push10(uint16_t v)   // fonction qui permet de faire mon buffer circulaire 10BITS
 {
     unsigned short n = nxt10(uartRxWr10);
     if (n == uartRxRd10) uartRxRd10 = nxt10(uartRxRd10); // overwrite oldest
@@ -51,7 +55,7 @@ static inline void push10(uint16_t v)
     uartRxWr10 = n;
 }
 
-bool uart_rx_pop10(uint16_t *v)
+bool uart_rx_pop10(uint16_t *v) // FIFO qui me permet dacceder a mon buffer 10BITS
 {
     if (uartRxRd10 == uartRxWr10) return false; // buffer vide
     *v = uartRxBuf10[uartRxRd10];
@@ -86,7 +90,8 @@ void __ISR(_UART_4_VECTOR, IPL5AUTO) U4RX_ISR(void)
             {
                 rx_msb8     = data8;
                 rx_wait_lsb = 1;
-            } else
+            }
+            else
             {
                 // 2messages 2 LSB
                 uint8_t  lsb2     = (uint8_t)(data8 & 0x03);
