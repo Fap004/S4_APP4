@@ -13,14 +13,28 @@ adc10_a_8:
 .end adc10_a_8
     
 #------------------------------------  
-.globl scindiller
-.ent scindiller
+.globl scindillerMSB
+.ent scindillerMSB
     
-scindiller:
+scindillerMSB:
     srl     v0, a0, 2  # paquet 1
-    andi    v1, a0, 0x0003 # paquet 2
+    andi    v1, a0, 0x0003 # paquet 2 
     
     jr      ra
     nop
+
+.end scindillerMSB
+#------------------------------------    
+.globl scindillerLSB
+.ent scindillerLSB
+
+scindillerLSB:
+    andi    v1, a0, 0x0003 # paquet 2
+    jr      ra
+    nop
+
+.end scindillerLSB
+
+    
 
 .end scindiller
