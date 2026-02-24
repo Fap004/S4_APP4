@@ -35,9 +35,6 @@
 //Machine à état fini permettant la gestion des modes
 void mef()
 {
-    // ===============================
-    // PRIORITÉ INTERCOM
-    // ===============================
     if (PORTFbits.RF3)
     {
         Etat = ETAT_INTERCOM; // intercom prioritaire
@@ -46,22 +43,23 @@ void mef()
     switch (Etat)
     {
         case ETAT_INTERCOM:
-            if (intercom())
+            if (intercom()) //Permet de sortir proprement de la fonction
             {
                 Etat = ETAT_ATT;
             }
-            OnLed(2);
+            OnLed(2);   //Visuel choisi pour afficher l'activation du mode intercom
         break;
         case ETAT_ATT:
-            T1CONbits.ON = 0;
+            //T1CONbits.ON = 0;   //timer 1 à off
+            
+            //Reset de tout les leds lors de l'etat attente
             OffLed(0);
             OffLed(1);
             OffLed(2);
             OffLed(3);
             OffLed(4);
             OffLed(5);
-            //OnLed(6);
-
+ 
             // Lecture boutons seulement en attente
             if (bouton_appuye(PORTBbits.RB8, &btnR)) 
             {
@@ -77,12 +75,13 @@ void mef()
             } 
             else if (bouton_appuye(PORTBbits.RB1, &btnU)) 
             {
-                Etat = ETAT_EN_TX;
+                Etat = ETAT_EN_TX;      //Envoie du message enregistrer
+                OnLed(3);
             } 
             else if (bouton_appuye(PORTAbits.RA15, &btnD)) 
             {
-                Etat = ETAT_TEST_TX;
-                test_tx_index = 0;  // préparer le buffer pour le Timer ISR
+                Etat = ETAT_TEST_TX;    //Envoie du signal test
+                test_tx_index = 0;      // préparer le buffer pour le Timer ISR
                 OnLed(4);
             }
             break;

@@ -31,26 +31,18 @@ int play(void)
 {
     static int started = 0; //variable permettant de connaitre si le circuit est actif ou inactif
 
-    //configure les timers, le Oc et initi les valeurs à 0 pour recommencer a neuf
+    //Remet a l'index a 0 et indique une fois que cest fait
     if (!started)
     {
-        //Timer1_config();
-        //Timer2_config();
-        //Timer3_config();
-        //OC_config();
-        
         ADC_index = 0;
         started = 1;
     }
 
-    //remet à l'etat initial les timers ainsi que le OC pour être prêt a recevoir une nouvelle commande par la suite
+    //remet à l'etat initial pour être prêt a recevoir une nouvelle commande par la suite
     if (ADC_index >= BUFFER_SIZE)
     {
         OC1RS = 0;      //sortie sonore à 0
         started = 0;
-        //OC_stop();
-        //Timer2_stop();
-        //Timer1_stop();
         return 1;       // terminé
     }
     
@@ -61,26 +53,18 @@ int enr_tx(void)
 {
     static int started = 0; //variable permettant de connaitre si le circuit est actif ou inactif
 
-    //configure les timers, le Oc et initi les valeurs à 0 pour recommencer a neuf
+    //Remet a l'index a 0 et indique une fois que cest fait
     if (!started)
-    {
-        //Timer1_config();
-        //Timer2_config();
-        //Timer3_config();
-        //OC_config();
-        
+    {    
         ADC_index = 0;
         started = 1;
     }
 
-    //remet à l'etat initial les timers ainsi que le OC pour être prêt a recevoir une nouvelle commande par la suite
+    //remet à l'etat initial pour être prêt a recevoir une nouvelle commande par la suite
     if (ADC_index >= BUFFER_SIZE)
     {
         OC1RS = 0;      //sortie sonore à 0
         started = 0;
-        //OC_stop();
-        //Timer2_stop();
-        //Timer1_stop();
         return 1;       // terminé
     }
     
@@ -91,23 +75,18 @@ int intercom(void)
 {
     static int started = 0; //variable permettant de connaitre si le circuit est actif ou inactif
     
-    //initalise l'ADC et le timer3
+    //initalise l'ADC
     if (!started)
     {
-        //ADC_index = 0;
-        //Timer3_config();
-        //OnLed(0);
         ADC_Init();
         started = 1;
     }
 
-    //remet à l'etat initial l'ADC, la led, la variable srated et le threshold
+    //remet à l'etat initial l'ADC
     if (!PORTFbits.RF3)
     {
         ADC_Stop();
-        //OffLed(0);
         started = 0;
-        //threshold=0;
         return 1;   // terminé
     }
 

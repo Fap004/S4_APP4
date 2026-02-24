@@ -45,7 +45,7 @@ void __ISR(_TIMER_1_VECTOR, IPL2AUTO) Timer1ISR(void)
 {  
 // Code de l'ISR ici
     
-  //LATAbits.LATA1 ^= 1;  
+  //LATAbits.LATA1 ^= 1;  //flash la led mais inutile pour ce code
   IFS0bits.T1IF = 0; // clear interrupt flag
 }
 
@@ -110,66 +110,96 @@ void Timer3_config()
     T3CONbits.ON = 1;           // On met le timer à ON
 }
 
+
 void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
 {
     uint16_t sample = 0;  // valeur par défaut pour OC1RS
 
     // Gestion des transmissions actives
     if (Etat == ETAT_TEST_TX)
-{
-    uint8_t sent = 0;
-
-    if (test_index < BUFFER_SIZE_TEST)
     {
-        // ===== MODE 10 BITS =====
-        if (PORTBbits.RB9 == 1)
+        uint8_t sent = 0;//variable pour connaitre le nombre d'envoie
+
+        if (test_index < BUFFER_SIZE_TEST)
         {
-            // Envoyer MSB PUIS LSB (tx_subindex: 0=MSB, 1=LSB)
-            while (!U4STAbits.UTXBF && sent < 2)
+            //MODE 10 BITS 
+            if (PORTBbits.RB9 == 1) //switch 7 à ON
             {
-                if (sent == 0)
-                    tx_subindex = 0;  // d'abord MSB
-                else
-                    tx_subindex = 1;  // puis LSB
-
-                UART4_SendSample();
-                sent++;
+                // Envoyer MSB PUIS LSB (tx_subindex: 0=MSB, 1=LSB)
+                while (!U4STAbits.UTXBF && sent < 2)//pret a recevoir et > 2 messages
+                {
+                    if (sent == 0)
+                    {
+                        tx_subindex = 0;  // 8 MSB, premier message
+                    }
+                    else
+                    {
+                        tx_subindex = 1;  //  2 LSB, deuxieme message
+                    }
+                    UART4_SendSample();
+                    sent++;
+                }
             }
-
-            // IMPORTANT : ne PAS ré-incrémenter test_index ici.
-            // UART4_SendSample() l'incrémente déjà à l'envoi du LSB.
+            // MODE 8 BITS
+            else    //Switch 7 à OFF
+            {
+                if (!U4STAbits.UTXBF)   //Pret a recevoir
+                {
+                    UART4_SendSample();
+                }
+            }
         }
-        // ===== MODE 8 BITS =====
         else
         {
-            if (!U4STAbits.UTXBF)
-            {
-                // Pas besoin de régler tx_subindex ni de ré-incrémenter test_index
-                UART4_SendSample();
-            }
+            test_index = 0; //Recommence la loop d'echantillons
+            test_cpt++;     //Incrémente la loop de periode fait
         }
     }
-    else
-    {
-        test_index = 0;
-        test_cpt++;
-    }
-}
     else if (Etat == ETAT_EN_TX)
     {
+        uint8_t sent = 0;
+
         if (ADC_index < BUFFER_SIZE)
         {
-            UART4_SendRecording();
-            ADC_index++;
+            // MODE 10 BITS
+            if (PORTBbits.RB9 == 1)
+            {
+                while (!U4STAbits.UTXBF && sent < 2)
+                {
+                    if (sent == 0)
+                    {
+                        tx_subindex = 0; //MSB message 1
+                    }
+                    else
+                    {
+                        tx_subindex = 1; //LSB message 2
+                    }
+
+                    UART4_SendRecording();
+                    sent++;
+
+                    if (sent == 2)
+                    {
+                        ADC_index++; //1 échantillon COMPLET envoyé
+                    }
+                }
+            }
+            // MODE 8 BITS
+            else
+            {
+                if (!U4STAbits.UTXBF)
+                {
+                    UART4_SendRecording();
+                    ADC_index++;
+                }
+            }
         }
         else
         {
             ADC_index = 0;
-            // sample = 0;  // OC1RS = 0 si rien à jouer
         }
     }
-
-    // Lecture des données UART pour jeu en direct
+    
     if (PORTBbits.RB9 == 0)  // mode 8 bits
     {
         uint8_t byte8;
@@ -183,7 +213,7 @@ void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
         uart_rx_pop10(&sample);  // retourne 0 si FIFO vide
     }
 
-    // Si pas de donnée UART, on joue selon l'état normal
+    // Si pas de donnée on lit les etats moins prioritaire
     if (sample == 0)
     {
         switch (Etat)
@@ -216,6 +246,8 @@ void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
     tick_ms++;          // incrémentation du compteur temps
     IFS0bits.T3IF = 0;  // clear du flag Timer3
 }
+
+
 
 void Timer3_stop(){
     T3CONbits.ON = 0;

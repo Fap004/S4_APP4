@@ -44,25 +44,18 @@ int test(void)
 {
     static int started = 0; //variable permettant de connaitre si le circuit est actif ou inactif
     
-    //configure les timers, le Oc et initi les valeurs à 0 pour recommencer a neuf
+    // initialise les valeurs à 0 pour recommencer a neuf
     if (!started)
     {
-        //Timer2_config();
-        //Timer3_config();
-        //OC_config();
-        
         started = 1;
         test_index = 0;
         test_cpt = 0;
     }
     
-    //remet à l'etat initial les timers ainsi que le OC pour être prêt a recevoir une nouvelle commande par la suite
+    //remet à l'etat initial être prêt a recevoir une nouvelle commande par la suite
     if (test_cpt >= NB_PERIODE_TEST)
     {
         started = 0;
-        //OC_stop();
-        //Timer2_stop();
-        //Timer3_stop();
         OC1RS = 0;      //sortie sonore à 0
         return 1;       // terminé
     }
@@ -74,25 +67,18 @@ int test_tx(void)
 {
     static int started = 0; //variable permettant de connaitre si le circuit est actif ou inactif
     
-    //configure les timers, le Oc et initi les valeurs à 0 pour recommencer a neuf
+    //initialise les valeurs à 0 pour recommencer a neuf
     if (!started)
-    {
-        //Timer2_config();
-        //Timer3_config();
-        //OC_config();
-        
+    {    
         started = 1;
         test_index = 0;
         test_cpt = 0;
     }
     
-    //remet à l'etat initial les timers ainsi que le OC pour être prêt a recevoir une nouvelle commande par la suite
+    //remet à l'etat initial pour être prêt a recevoir une nouvelle commande par la suite
     if (test_cpt >= NB_PERIODE_TEST)
     {
         started = 0;
-        //OC_stop();
-        //Timer2_stop();
-        //Timer3_stop();
         OC1RS = 0;      //sortie sonore à 0
         return 1;       // terminé
     }

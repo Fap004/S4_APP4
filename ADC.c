@@ -62,29 +62,24 @@ void ADC_Init()
     AD1CON1bits.ON = 1;       //ACTIVATION
  }
 
-//Fonction sauvegardant le bruit du microphone apres avoir atteint le seuil et le delai
+//Fonction sauvegardant le bruit du microphone ou le joue directement selon la fonction
 void __ISR(_ADC_VECTOR, IPL7AUTO) ADC_ISR(void)
 {
-    // Lire UNE FOIS l'échantillon
+    // Échantillon transférer dans une variable pour des calculs
     uint16_t sample10 = ADC1BUF0;
 
     if (Etat == ETAT_INTERCOM)
     {
         // Envoi intercom à la cadence d'échantillonnage
         UART4_SendIntercom_Sample(sample10);
-
-        // (Optionnel) Indiquer activité
-        // OnLed(5);
     }
     else
     {
-        // OffLed(5); // éviter de faire trop d'I/O en ISR si tu peux
-
         if (ADC_index < BUFFER_SIZE)
         {
             audioBuffer[ADC_index++] = sample10;
-            threshold = 1;
-            OnLed(0); // OK si ça ne surcharge pas; sinon, déplace hors ISR
+            //threshold = 1;
+            OnLed(0);
         }
         else
         {

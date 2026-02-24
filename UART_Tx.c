@@ -57,13 +57,13 @@ void UART4_SendSample(void)
 {
     if (PORTBbits.RB9 == 0)
     {
-        // ===== MODE 8 BITS =====
+        //MODE 8 BITS
         U4TXREG = ajout_parite_odd(test_buffer[test_index] >> 2);
         test_index++;
     }
     else
     {
-        // ===== MODE 10 BITS =====
+        //MODE 10 BITS
         if (tx_subindex == 0)
         {
             U4TXREG = ajout_parite_odd(scindillerMSB(test_buffer[test_index]));
@@ -73,7 +73,7 @@ void UART4_SendSample(void)
         {
             U4TXREG = ajout_parite_odd(scindillerLSB(test_buffer[test_index]));
             tx_subindex = 0;
-            test_index++;   // incrément UNIQUEMENT après LSB -> correct
+            test_index++;
         }
     }
 }
@@ -82,22 +82,21 @@ void UART4_SendRecording(void)
 {
     if (PORTBbits.RB9 == 0) 
     {
-        // 8 bits
-        if (!U4STAbits.UTXBF) 
-        {
-            U4TXREG = ajout_parite_odd((audioBuffer[ADC_index] >> 2));
-        }
+        //MODe 8 BITS
+        U4TXREG = ajout_parite_odd((audioBuffer[ADC_index] >> 2));
     }
     else 
     {
-        // 10 bits : MSB puis LSB, chacun avec parité logicielle
-        if (!U4STAbits.UTXBF) 
+        // MODE 10 BITS
+        if (tx_subindex == 0)
         {
             U4TXREG = ajout_parite_odd(scindillerMSB(audioBuffer[ADC_index]));
+            tx_subindex = 1;
         }
-        if (!U4STAbits.UTXBF) 
+        else
         {
             U4TXREG = ajout_parite_odd(scindillerLSB(audioBuffer[ADC_index]));
+            tx_subindex = 0;
         }
     }
 }
@@ -106,7 +105,7 @@ void UART4_SendIntercom_Sample(uint16_t sample10)
 {
     if (PORTBbits.RB9 == 0)
     {
-        // ===== MODE 8 BITS =====
+        // MODE 8 BITS
         if (!U4STAbits.UTXBF)
         {
             U4TXREG = ajout_parite_odd((uint8_t)(sample10 >> 2));
@@ -114,7 +113,7 @@ void UART4_SendIntercom_Sample(uint16_t sample10)
     }
     else
     {
-        // ===== MODE 10 BITS ===== (MSB puis LSB)
+        // MODE 10 BITS
         if (!U4STAbits.UTXBF)
         {
             U4TXREG = ajout_parite_odd(scindillerMSB(sample10));

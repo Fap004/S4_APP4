@@ -33,8 +33,6 @@ int enregistrement(void)
     if (!started)
     {
         ADC_index = 0;
-        //Timer3_config();
-        //OnLed(0);
         ADC_Init();
         started = 1;
     }

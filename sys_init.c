@@ -36,13 +36,13 @@ void sys_init(void)
     boutons_init();
     speaker_init();
     micro_init();
-    //ADC_Init();          // ADC avant timers si Timer déclenche lecture
-    UART_Init();         // RX/TX prêt avant Timer3 ISR
+    //ADC_Init();          // ADC initialisé au debut de son utilisation et reset a la fin
+    UART_Init();         
     switch_init();
-    OC_config();         // config PWM avant timers si Timer3 pilote OC
-    //Timer1_config();
+    OC_config();         
+    //Timer1_config();   //Inutilisé
     Timer2_config();
-    Timer3_config();     // Timer3 ISR actif à la fin
+    Timer3_config();
     macro_enable_interrupts();
     
     OnLed(7);
