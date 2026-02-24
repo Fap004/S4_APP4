@@ -13,17 +13,12 @@
 volatile size_t test_tx_index = 0;   // indice courant dans test_buffer
 
 /* ---------- Parité impaire logicielle (sur 8 bits) ---------- */
-static inline uint8_t odd_parity8(uint8_t d) {
+static inline uint8_t odd_parity8(uint8_t d) 
+{
     d ^= (uint8_t)(d >> 4);
     d ^= (uint8_t)(d >> 2);
     d ^= (uint8_t)(d >> 1);
     return (uint8_t)(~d) & 1u;  // 1 => mettre MSB=1 pour rendre la parité impaire
-}
-
-/* ---------- Émission d?un mot 9 bits (PDSEL=0b11) ---------- */
-static inline void UART4_PutChar9(uint16_t v9) {
-    while (U4STAbits.UTXBF) { /* attendre de la place dans le FIFO TX */ }
-    U4TXREG = v9;             // en 9-bit mode, le bit 8 (MSB) est transmis
 }
 
 /* ---------- Initialisation UART4 ---------- */
@@ -42,9 +37,9 @@ void UART_Init(void)
 
     // Baud ~115200 @ PBCLK 48 MHz
     U4MODEbits.BRGH = 0;        // 0
-    U4BRG = 25;         // 25 (115200 bps typique)
+    U4BRG = 14;         // 25 (115200 bps typique) 14=200 000
 
-    U4MODEbits.PDSEL = 0b00; // 0b11
+    U4MODEbits.PDSEL = 0b00; // 0b11 9 BITS parite
     U4MODEbits.STSEL = 1;        // 1
 
     // Activer TX/RX AVANT ON (ordre recommandé par le FRM)
@@ -60,101 +55,6 @@ void UART_Init(void)
     IPC9bits.U4IS   = 0;
 
     U4MODEbits.ON = 1;
-}
-
-/* ---------- API émission "octet" ---------- */
-void UART4_PutByte(uint8_t b) {
-    UART4_PutChar9((uint16_t)b); // MSB=0 (pas de parité logicielle)
-}
-
-void UART4_PutByteOddParity(uint8_t b) {
-    uint16_t v9 = (uint16_t)b;
-    v9 |= ((uint16_t)odd_parity8(b) << 8);
-    UART4_PutChar9(v9);
-}
-
-/* ---------- Helpers 10 bits -> 8 MSB + 2 LSB ---------- */
-typedef struct { uint8_t msb8, lsb2; } packed10_t;
-
-static inline uint8_t top8_from_10bits(uint16_t s10) { return (uint8_t)(s10 >> 2); }
-static inline packed10_t pack10(uint16_t s10) {
-    packed10_t p; p.msb8 = (uint8_t)(s10 >> 2); p.lsb2 = (uint8_t)(s10 & 0x03); return p;
-}
-
-/* ---------- Envoi buffer ADC en 8 MSB (1 octet/échantillon) ---------- */
-void UART4_SendADC_8MSB_in_9bit(const volatile uint16_t *adcBuf, size_t count, bool withOddParity)
-{
-    size_t i;
-    for (i = 0; i < count; i++) {
-        uint8_t d8 = top8_from_10bits(adcBuf[i]);
-        if (withOddParity) UART4_PutByteOddParity(d8);
-        else               UART4_PutByte(d8);
-    }
-}
-
-/* ---------- Envoi buffer ADC "10 bits scindés" (2 octets/échantillon) ---------- */
-void UART4_SendADC_10bits_in_9bit(const volatile uint16_t *adcBuf, size_t count, bool withOddParity)
-{
-    size_t i;
-    for (i = 0; i < count; i++) {
-        packed10_t p = pack10(adcBuf[i]);
-        if (withOddParity) { UART4_PutByteOddParity(p.msb8); UART4_PutByteOddParity(p.lsb2); }
-        else               { UART4_PutByte(p.msb8);         UART4_PutByte(p.lsb2);         }
-    }
-}
-
-/* ---------- Raccourci : envoyer le buffer ADC global ---------- */
-void UART4_StartTransmitRecorded(bool full10bits, bool withOddParity)
-{
-    extern volatile uint16_t audioBuffer[BUFFER_SIZE];
-    extern volatile int      ADC_index;
-
-    size_t count = (size_t)ADC_index;
-    if (count == 0) return;
-
-    if (full10bits) UART4_SendADC_10bits_in_9bit(audioBuffer, count, withOddParity);
-    else            UART4_SendADC_8MSB_in_9bit  (audioBuffer, count, withOddParity);
-}
-
-// Renvoie true si tout le buffer a été transmis, false sinon
-bool UART4_SendTestBuffer_8MSB_NB(bool withOddParity)
-{
-    if (test_tx_index >= BUFFER_SIZE_TEST)
-    {
-        test_tx_index = 0;      // reset pour la prochaine fois
-        return true;            // tout envoyé
-    }
-
-    uint8_t d8 = (uint8_t)(test_buffer[test_tx_index] >> 2);  // 8 MSB
-    if (withOddParity)
-    {
-        UART4_PutByteOddParity(d8);
-    }
-    else
-    {
-        UART4_PutByte(d8);
-    }
-    test_tx_index++;           // passer au prochain octet
-    return false;              // toujours en cours
-}
-
-void UART4_SendTestBufferBlocking(void)
-{
-    int i;
-    for (i = 0; i < BUFFER_SIZE_TEST; i++) 
-    {
-        uint8_t d8 = (uint8_t)(test_buffer[i] >> 2);  // 8 MSB
-
-        // attendre que le FIFO TX ait de la place
-        while (U4STAbits.UTXBF);
-
-        // envoyer le byte (sans parité)
-        U4TXREG = d8;
-
-        // pour simuler 8kHz, délai ~125 µs
-        unsigned int tStart = _CP0_GET_COUNT();
-        while ((_CP0_GET_COUNT() - tStart) < 300000);  // ajuster selon PBCLK
-    }
 }
 
 //volatile uint8_t idx = 0;

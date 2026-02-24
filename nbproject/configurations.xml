@@ -20,7 +20,6 @@
       <itemPath>speaker.h</itemPath>
       <itemPath>play.h</itemPath>
       <itemPath>UART.h</itemPath>
-      <itemPath>labUart.h</itemPath>
       <itemPath>UART_Tx.h</itemPath>
       <itemPath>UART_Rx.h</itemPath>
     </logicalFolder>
@@ -45,8 +44,6 @@
       <itemPath>speaker.c</itemPath>
       <itemPath>recording.c</itemPath>
       <itemPath>button.c</itemPath>
-      <itemPath>UART.c</itemPath>
-      <itemPath>labUart.c</itemPath>
       <itemPath>UART_Tx.c</itemPath>
       <itemPath>UART_Rx.c</itemPath>
       <itemPath>parite_S.S</itemPath>

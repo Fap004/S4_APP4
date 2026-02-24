@@ -38,17 +38,5 @@ int main(void)
     while (1)
     {
         mef();              //MEF controlant les modes
-//    if (!PORTFbits.RF3)
-//    {
-//        OnLed(3); // intercom prioritaire
-//        OffLed(5);
-//    }
-//    if (PORTFbits.RF3)
-//    {
-//        OnLed(5); // intercom prioritaire
-//        OffLed(3);
-//    }
-    //        gestion_volume();   //Gestion du volume
     }
 } 
-//test luis
