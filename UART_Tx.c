@@ -10,20 +10,11 @@
 #include "ADC.h"   // audioBuffer[], ADC_index
 #include "test.h"
 
+volatile uint8_t tx_subindex=0;   // 0 = MSB, 1 = LSB
 volatile size_t test_tx_index = 0;   // indice courant dans test_buffer
 extern  int scindillerMSB(unsigned int data);
 extern  int scindillerLSB(unsigned int data);
 extern  int ajout_parite_odd (unsigned int data);
-
-
-/* ---------- Parité impaire logicielle (sur 8 bits) ---------- */
-/*static inline uint8_t odd_parity8(uint8_t d) 
-{
-    d ^= (uint8_t)(d >> 4);
-    d ^= (uint8_t)(d >> 2);
-    d ^= (uint8_t)(d >> 1);
-    return (uint8_t)(~d) & 1u;  // 1 => mettre MSB=1 pour rendre la parité impaire
-}/*
 
 /* ---------- Initialisation UART4 ---------- */
 void UART_Init(void)
@@ -64,58 +55,73 @@ void UART_Init(void)
 //volatile uint8_t idx = 0;
 void UART4_SendSample(void)
 {
-    if (!U4STAbits.UTXBF)
+    if (PORTBbits.RB9 == 0)
     {
-        if (PORTBbits.RB9 == 0) 
+        // ===== MODE 8 BITS =====
+        U4TXREG = ajout_parite_odd(test_buffer[test_index] >> 2);
+        test_index++;
+    }
+    else
+    {
+        // ===== MODE 10 BITS =====
+        if (tx_subindex == 0)
         {
-            //U4TXREG = (uint8_t)(test_buffer[test_index] >> 2);
-            U4TXREG=ajout_parite_odd(test_buffer[test_index] >> 2);
+            U4TXREG = ajout_parite_odd(scindillerMSB(test_buffer[test_index]));
+            tx_subindex = 1;
         }
-    
         else
         {
-            U4TXREG=ajout_parite_odd(scindillerMSB(test_buffer[test_index]));
-            U4TXREG=ajout_parite_odd(scindillerLSB(test_buffer[test_index]));            
-            //U4TXREG=scindillerMSB(test_buffer[test_index]);
-            //U4TXREG=scindillerLSB(test_buffer[test_index]);
+            U4TXREG = ajout_parite_odd(scindillerLSB(test_buffer[test_index]));
+            tx_subindex = 0;
+            test_index++;   // incrément UNIQUEMENT après LSB -> correct
         }
     }
 }
 
 void UART4_SendRecording(void)
 {
-    if (!U4STAbits.UTXBF) 
+    if (PORTBbits.RB9 == 0) 
     {
-        if (PORTBbits.RB9 == 0)
+        // 8 bits
+        if (!U4STAbits.UTXBF) 
         {
-            //U4TXREG = (uint8_t)(audioBuffer[ADC_index] >> 2);
-            U4TXREG=ajout_parite_odd(audioBuffer[ADC_index] >> 2);
+            U4TXREG = ajout_parite_odd((audioBuffer[ADC_index] >> 2));
         }
-        else
+    }
+    else 
+    {
+        // 10 bits : MSB puis LSB, chacun avec parité logicielle
+        if (!U4STAbits.UTXBF) 
         {
-            U4TXREG=ajout_parite_odd(scindillerMSB(audioBuffer[ADC_index]));
-            U4TXREG=ajout_parite_odd(scindillerLSB(audioBuffer[ADC_index]));
-            //U4TXREG=scindillerMSB(audioBuffer[ADC_index]);
-            //U4TXREG=scindillerLSB(audioBuffer[ADC_index]);
+            U4TXREG = ajout_parite_odd(scindillerMSB(audioBuffer[ADC_index]));
+        }
+        if (!U4STAbits.UTXBF) 
+        {
+            U4TXREG = ajout_parite_odd(scindillerLSB(audioBuffer[ADC_index]));
         }
     }
 }
 
-void UART4_SendIntercom(void)
+void UART4_SendIntercom_Sample(uint16_t sample10)
 {
-    if (!U4STAbits.UTXBF) 
+    if (PORTBbits.RB9 == 0)
     {
-        if (PORTBbits.RB9 == 0)
+        // ===== MODE 8 BITS =====
+        if (!U4STAbits.UTXBF)
         {
-            U4TXREG=ajout_parite_odd(ADC1BUF0 >> 2);
-            //U4TXREG = (uint8_t)(ADC1BUF0 >> 2);
+            U4TXREG = ajout_parite_odd((uint8_t)(sample10 >> 2));
         }
-        else
+    }
+    else
+    {
+        // ===== MODE 10 BITS ===== (MSB puis LSB)
+        if (!U4STAbits.UTXBF)
         {
-            U4TXREG=ajout_parite_odd(scindillerMSB(ADC1BUF0));
-            U4TXREG=ajout_parite_odd(scindillerLSB(ADC1BUF0));
-            //U4TXREG=scindillerMSB(ADC1BUF0);
-            //U4TXREG=scindillerLSB(ADC1BUF0);
+            U4TXREG = ajout_parite_odd(scindillerMSB(sample10));
+        }
+        if (!U4STAbits.UTXBF)
+        {
+            U4TXREG = ajout_parite_odd(scindillerLSB(sample10));
         }
     }
 }

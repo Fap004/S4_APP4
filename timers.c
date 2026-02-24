@@ -95,8 +95,7 @@ void Timer2_stop()
 
 void Timer3_config()
 {
-    // Initialisation du timer 3  P.14-9 guide de r?f?rence
-    
+    // Initialisation du timer 3  P.14-9 guide de r?f?rence 
     T3CONbits.SIDL = 0;         // On utilise pas le "Iddle mode"
     T3CONbits.TCS = 0;          // Pas de clk externe
     T3CONbits.TGATE = 0;        // pas de Gate
@@ -117,18 +116,45 @@ void __ISR(_TIMER_3_VECTOR, IPL6AUTO) Timer3_ISR(void)
 
     // Gestion des transmissions actives
     if (Etat == ETAT_TEST_TX)
+{
+    uint8_t sent = 0;
+
+    if (test_index < BUFFER_SIZE_TEST)
     {
-        if (test_index < BUFFER_SIZE_TEST)
+        // ===== MODE 10 BITS =====
+        if (PORTBbits.RB9 == 1)
         {
-            UART4_SendSample();
-            test_index++;
+            // Envoyer MSB PUIS LSB (tx_subindex: 0=MSB, 1=LSB)
+            while (!U4STAbits.UTXBF && sent < 2)
+            {
+                if (sent == 0)
+                    tx_subindex = 0;  // d'abord MSB
+                else
+                    tx_subindex = 1;  // puis LSB
+
+                UART4_SendSample();
+                sent++;
+            }
+
+            // IMPORTANT : ne PAS ré-incrémenter test_index ici.
+            // UART4_SendSample() l'incrémente déjà à l'envoi du LSB.
         }
+        // ===== MODE 8 BITS =====
         else
         {
-            test_index = 0;
-            test_cpt++;
+            if (!U4STAbits.UTXBF)
+            {
+                // Pas besoin de régler tx_subindex ni de ré-incrémenter test_index
+                UART4_SendSample();
+            }
         }
     }
+    else
+    {
+        test_index = 0;
+        test_cpt++;
+    }
+}
     else if (Etat == ETAT_EN_TX)
     {
         if (ADC_index < BUFFER_SIZE)
